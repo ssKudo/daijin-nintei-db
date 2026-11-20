@@ -1,0 +1,1892 @@
+{
+  "version": "1.0.0",
+  "generated_at": "2026-11-20T02:22:28+00:00",
+  "source_urls": [
+    "https://www.mlit.go.jp/jutakukentiku/build/jutakukentiku_house_tk_000165.html",
+    "https://www.mlit.go.jp/common/001069848.pdf",
+    "https://www.mlit.go.jp/common/001069853.pdf",
+    "https://www.mlit.go.jp/common/001069849.pdf",
+    "https://www.mlit.go.jp/common/001288118.pdf"
+  ],
+  "seinokyo_search_url": "https://www.seinokyo.jp/ninteidb/pub/",
+  "structure_types": {
+    "FP": {
+      "ja": "耐火構造",
+      "en": "Fireproof Construction",
+      "law_article": "建築基準法第2条第七号・施行令第107条",
+      "description": "通常の火災が終了するまで倒壊及び延焼を防止するために必要な性能を有する構造"
+    },
+    "QF": {
+      "ja": "準耐火構造",
+      "en": "Quasi-Fireproof Construction",
+      "law_article": "建築基準法第2条第七号の二・施行令第107条の2（60分以上は令第129条の2の3等）",
+      "description": "通常の火災による延焼を抑制するために必要な準耐火性能を有する構造"
+    },
+    "PC": {
+      "ja": "防火構造",
+      "en": "Fire Preventive Construction",
+      "law_article": "建築基準法第2条第八号・施行令第108条",
+      "description": "建築物の周囲において発生する通常の火災による延焼を抑制するための構造"
+    },
+    "QP": {
+      "ja": "準防火構造",
+      "en": "Quasi-Fire Preventive Construction",
+      "law_article": "建築基準法第23条・施行令第109条の6",
+      "description": "法22条区域内の木造建築物等の外壁に求められる20分間の準防火性能を有する構造"
+    },
+    "PS": {
+      "ja": "防火区画貫通部",
+      "en": "Fire Compartment Penetration Seal",
+      "law_article": "建築基準法施行令第129条の2の4第1項第七号ハ（旧令第129条の2の5）",
+      "description": "防火区画を貫通する給水管・配電管その他の管の貫通部処理措置"
+    },
+    "NH": {
+      "ja": "防火壁の設置を要しない建築物の床等",
+      "en": "Fire-Preventive Floor (Exempt from Fire Wall)",
+      "law_article": "建築基準法施行令第109条の3第二号ハ・第115条の2第1項第四号",
+      "description": "防火壁の設置を要しない建築物の床等の構造"
+    },
+    "FI": {
+      "ja": "防火壁を設けた部分の屋根の構造等",
+      "en": "Flame Insulation Roof",
+      "law_article": "建築基準法施行令第109条の3第一号・第113条第1項第三号",
+      "description": "防火壁を設けた部分の屋根の構造等"
+    }
+  },
+  "part_codes": {
+    "BE": {
+      "ja": "外壁（耐力壁）",
+      "en": "Bearing Wall (Exterior wall)",
+      "load_bearing": true
+    },
+    "BP": {
+      "ja": "間仕切壁（耐力壁）",
+      "en": "Bearing Wall (Partition wall)",
+      "load_bearing": true
+    },
+    "NE": {
+      "ja": "外壁（非耐力壁）",
+      "en": "Non-bearing Wall (Exterior wall)",
+      "load_bearing": false
+    },
+    "NP": {
+      "ja": "間仕切壁（非耐力壁）",
+      "en": "Non-bearing Wall (Partition wall)",
+      "load_bearing": false
+    },
+    "CN": {
+      "ja": "柱",
+      "en": "Column",
+      "load_bearing": true
+    },
+    "FL": {
+      "ja": "床",
+      "en": "Floor",
+      "load_bearing": true
+    },
+    "BM": {
+      "ja": "はり",
+      "en": "Beam",
+      "load_bearing": true
+    },
+    "RF": {
+      "ja": "屋根",
+      "en": "Roof",
+      "load_bearing": false
+    },
+    "ST": {
+      "ja": "階段",
+      "en": "Stair",
+      "load_bearing": null
+    },
+    "RS": {
+      "ja": "軒裏",
+      "en": "Soffit",
+      "load_bearing": false
+    },
+    "PR": {
+      "ja": "ひさし",
+      "en": "Pent Roof",
+      "load_bearing": false
+    },
+    "CE": {
+      "ja": "強化天井",
+      "en": "Ceiling",
+      "load_bearing": false
+    },
+    "WL": {
+      "ja": "壁（防火区画貫通部）",
+      "en": "Wall (Penetration)",
+      "load_bearing": null
+    }
+  },
+  "performance_codes": {
+    "ND": {
+      "ja": "非損傷性(構造耐力)",
+      "en": "Non-Damage Ability",
+      "raw": "非損傷性(構造耐力) ※下記「要求性能一覧 1」"
+    },
+    "N": {
+      "ja": "非損傷性(構造耐力)",
+      "en": "Non-Damage Ability",
+      "raw": "非損傷性(構造耐力) ※下記「要求性能一覧 1」"
+    },
+    "HI": {
+      "ja": "遮熱性",
+      "en": "Heat Insulation Property",
+      "raw": "遮熱性 ※下記「要求性能一覧 2」"
+    },
+    "H": {
+      "ja": "遮熱性",
+      "en": "Heat Insulation Property",
+      "raw": "遮熱性 ※下記「要求性能一覧 2」"
+    },
+    "FI": {
+      "ja": "遮炎性",
+      "en": "Flame Insulation Property",
+      "raw": "遮炎性 ※下記「要求性能一覧 3」"
+    },
+    "F": {
+      "ja": "遮炎性",
+      "en": "Flame Insulation Property",
+      "raw": "遮炎性 ※下記「要求性能一覧 3」"
+    }
+  },
+  "performance_requirements": {
+    "①": "構造耐力上支障のある変形、溶融、破壊、その他の損傷を生じないものであること",
+    "②": "加熱面以外の面(屋内に面するものに限る)の温度が可燃物燃焼温度以上に上昇しないものであること",
+    "③": "屋外に火災を出す原因となるき裂その他の損傷を生じないものであること",
+    "④": "燃焼しないものであること",
+    "⑤": "防火上有害な変形、溶融、き裂その他の損傷を生じないものであること",
+    "⑥": "避難上有害な煙又はガスを発生しないものであること",
+    "⑦": "屋根が、通常の火災による火の粉により、防火上有害な発炎をしないものであること",
+    "⑧": "屋根が、通常の火災による火の粉により、屋内に達する防火上有害な溶融、き裂その他の損傷を生じないものであること",
+    "⑨": "加熱面以外の面に火炎を出さないものであること"
+  },
+  "exact_codes": {
+    "CAS": {
+      "code": "CAS",
+      "group": "防火設備",
+      "category": "防火設備の作動性能等",
+      "sub_category": "煙感知器連動",
+      "duration_min": null,
+      "part": "防火設備の自動閉鎖機構",
+      "load_bearing": null,
+      "law_article": "建築基準法施行令第112条第14項第二号(防火設備の作動性能等)",
+      "description": "防火設備の作動性能等 / 煙感知器連動"
+    },
+    "CAT": {
+      "code": "CAT",
+      "group": "防火設備",
+      "category": "防火設備の作動性能等",
+      "sub_category": "熱感知器連動",
+      "duration_min": null,
+      "part": "防火設備の自動閉鎖機構",
+      "load_bearing": null,
+      "law_article": "建築基準法施行令第112条第14項第一号(防火設備の作動性能等)",
+      "description": "防火設備の作動性能等 / 熱感知器連動"
+    },
+    "CC": {
+      "code": "CC",
+      "group": "防耐火構造",
+      "category": "その他の構造",
+      "sub_category": "柱の防火被覆",
+      "duration_min": null,
+      "part": "柱",
+      "load_bearing": true,
+      "law_article": "建築基準法施行令第70条(柱の防火被覆)",
+      "description": "その他の構造 / 柱の防火被覆"
+    },
+    "CCN": {
+      "code": "CCN",
+      "group": "防耐火構造",
+      "category": "その他の構造",
+      "sub_category": "不燃性を有する建築物の部分",
+      "duration_min": null,
+      "part": "建築物の部分（煙突周囲等）",
+      "load_bearing": null,
+      "law_article": "建築基準法施行令第115条第1項第三号ロ",
+      "description": "その他の構造 / 不燃性を有する建築物の部分"
+    },
+    "DR": {
+      "code": "DR",
+      "group": "防耐火構造",
+      "category": "飛び火構造",
+      "sub_category": "防火地域等の屋根・一般",
+      "duration_min": null,
+      "part": "屋根",
+      "load_bearing": false,
+      "law_article": "建築基準法第63条並びに同法施行令第136条の2の2第一号及び第二号(防火地域又は準防火地域内の建築物の屋根)",
+      "description": "飛び火構造 / 防火地域等の屋根・一般"
+    },
+    "DW": {
+      "code": "DW",
+      "group": "防耐火構造",
+      "category": "飛び火構造",
+      "sub_category": "防火地域等の屋根・不燃性物品保管倉庫",
+      "duration_min": null,
+      "part": "屋根",
+      "load_bearing": false,
+      "law_article": "建築基準法第63条及び同法施行令第136条の2の2第一号(防火地域又は準防火地域内の建築物の屋根(不燃性の物品を保管する倉庫用))",
+      "description": "飛び火構造 / 防火地域等の屋根・不燃性物品保管倉庫"
+    },
+    "DW1A": {
+      "code": "DW1A",
+      "group": "建築設備等",
+      "category": "合併処理浄化槽の構造",
+      "sub_category": "浄化槽（BOD除去率・放流水質区分）",
+      "duration_min": null,
+      "part": "浄化槽",
+      "load_bearing": null,
+      "law_article": "建築基準法施行令第35条第1項",
+      "description": "合併処理浄化槽の構造（DW1A区分）"
+    },
+    "DW1B": {
+      "code": "DW1B",
+      "group": "建築設備等",
+      "category": "合併処理浄化槽の構造",
+      "sub_category": "浄化槽（高度処理型等）",
+      "duration_min": null,
+      "part": "浄化槽",
+      "load_bearing": null,
+      "law_article": "建築基準法施行令第35条第1項",
+      "description": "合併処理浄化槽の構造（DW1B区分）"
+    },
+    "DW1E": {
+      "code": "DW1E",
+      "group": "建築設備等",
+      "category": "合併処理浄化槽の構造",
+      "sub_category": "浄化槽（高度処理型等）",
+      "duration_min": null,
+      "part": "浄化槽",
+      "load_bearing": null,
+      "law_article": "建築基準法施行令第35条第1項",
+      "description": "合併処理浄化槽の構造（DW1E区分）"
+    },
+    "DW1N": {
+      "code": "DW1N",
+      "group": "建築設備等",
+      "category": "合併処理浄化槽の構造",
+      "sub_category": "浄化槽（窒素除去型等）",
+      "duration_min": null,
+      "part": "浄化槽",
+      "load_bearing": null,
+      "law_article": "建築基準法施行令第35条第1項",
+      "description": "合併処理浄化槽の構造（DW1N区分）"
+    },
+    "DW3N": {
+      "code": "DW3N",
+      "group": "建築設備等",
+      "category": "合併処理浄化槽の構造",
+      "sub_category": "",
+      "duration_min": null,
+      "part": null,
+      "load_bearing": null,
+      "law_article": "建築基準法施行令第35条第1項等",
+      "description": "合併処理浄化槽の構造"
+    },
+    "EA": {
+      "code": "EA",
+      "group": "防火設備",
+      "category": "防火区画の開口部",
+      "sub_category": "",
+      "duration_min": 60,
+      "part": "開口部（防火設備）",
+      "load_bearing": null,
+      "law_article": "建築基準法施行令第112条第1項(特定防火設備)",
+      "description": "防火区画の開口部"
+    },
+    "EB": {
+      "code": "EB",
+      "group": "防火設備",
+      "category": "耐火建築物等の外壁防火設備",
+      "sub_category": "",
+      "duration_min": 20,
+      "part": "開口部（防火設備）",
+      "load_bearing": null,
+      "law_article": "建築基準法第2条第九号のニロ及び同法施行令第109条の2(20分間の遮炎性能を有する防火設備)",
+      "description": "耐火建築物等の外壁防火設備"
+    },
+    "EBN010": {
+      "code": "EBN010",
+      "group": "防火設備",
+      "category": "防火設備（遮炎性能）",
+      "sub_category": "10分遮炎性能を有する防火設備等",
+      "duration_min": 10,
+      "part": "開口部（防火設備）",
+      "load_bearing": null,
+      "law_article": "建築基準法第2条第九号の二ロ・施行令第109条の2関連",
+      "description": "防火設備（遮炎性能・10分間）"
+    },
+    "EBN020": {
+      "code": "EBN020",
+      "group": "防火設備",
+      "category": "防火設備（遮炎性能）",
+      "sub_category": "20分遮炎性能を有する防火設備等",
+      "duration_min": 20,
+      "part": "開口部（防火設備）",
+      "load_bearing": null,
+      "law_article": "建築基準法第2条第九号の二ロ・施行令第109条の2関連",
+      "description": "防火設備（遮炎性能・20分間）"
+    },
+    "EC": {
+      "code": "EC",
+      "group": "防火設備",
+      "category": "防火地域等の外壁防火設備",
+      "sub_category": "",
+      "duration_min": 20,
+      "part": "開口部（防火設備）",
+      "load_bearing": null,
+      "law_article": "建築基準法第64条及び同法施行令第136条の2の3(20分間の準遮炎性能を有する防火設備)",
+      "description": "防火地域等の外壁防火設備"
+    },
+    "ECN020": {
+      "code": "ECN020",
+      "group": "防火設備",
+      "category": "防火設備（準遮炎性能）",
+      "sub_category": "20分準遮炎性能を有する防火設備等",
+      "duration_min": 20,
+      "part": "開口部（防火設備）",
+      "load_bearing": null,
+      "law_article": "建築基準法施行令第136条の2の3関連",
+      "description": "防火設備（準遮炎性能・20分間）"
+    },
+    "ED": {
+      "code": "ED",
+      "group": "防火設備",
+      "category": "防火ダンパー等",
+      "sub_category": "界壁等を貫通する風道に設ける防火設備",
+      "duration_min": null,
+      "part": "風道・防火ダンパー",
+      "load_bearing": null,
+      "law_article": "建築基準法施行令第112条関連",
+      "description": "界壁等を貫通する風道に設ける防火設備（防火ダンパー等）"
+    },
+    "FI020RF": {
+      "code": "FI020RF",
+      "group": "防耐火構造",
+      "category": "その他の構造",
+      "sub_category": "防火壁を設けた部分の屋根の構造等",
+      "duration_min": 20,
+      "part": "屋根",
+      "load_bearing": false,
+      "law_article": "建築基準法施行令第109条の3第一号及び第113条第1項第三号(屋根:各20分間)",
+      "description": "その他の構造 / 防火壁を設けた部分の屋根の構造等 / 20分間"
+    },
+    "FP030NE": {
+      "code": "FP030NE",
+      "group": "防耐火構造",
+      "category": "耐火構造",
+      "sub_category": "非耐力壁・外壁",
+      "duration_min": 30,
+      "part": "外壁（非耐力壁）",
+      "load_bearing": false,
+      "law_article": "建築基準法第2条第七号並びに同法施行令第107条第二号及び第三号(外壁(非耐力壁):各30分間)",
+      "description": "耐火構造 / 非耐力壁・外壁 / 30分間"
+    },
+    "FP030RF": {
+      "code": "FP030RF",
+      "group": "防耐火構造",
+      "category": "耐火構造",
+      "sub_category": "屋根",
+      "duration_min": 30,
+      "part": "屋根",
+      "load_bearing": false,
+      "law_article": "建築基準法第2条第七号並びに同法施行令第107条第一号及び第三号(屋根:各30分間)",
+      "description": "耐火構造 / 屋根 / 30分間"
+    },
+    "FP030ST": {
+      "code": "FP030ST",
+      "group": "防耐火構造",
+      "category": "耐火構造",
+      "sub_category": "階段",
+      "duration_min": 30,
+      "part": "階段",
+      "load_bearing": null,
+      "law_article": "建築基準法第2条第七号及び同法施行令第107条第一号(階段:30分間)",
+      "description": "耐火構造 / 階段 / 30分間"
+    },
+    "FP060BE": {
+      "code": "FP060BE",
+      "group": "防耐火構造",
+      "category": "耐火構造",
+      "sub_category": "耐力壁・外壁",
+      "duration_min": 60,
+      "part": "外壁（耐力壁）",
+      "load_bearing": true,
+      "law_article": "建築基準法第2条第七号並びに同法施行令第107条第一号、第二号及び第三号(外壁(耐力壁):各1時間)",
+      "description": "耐火構造 / 耐力壁・外壁 / 60分間"
+    },
+    "FP060BM": {
+      "code": "FP060BM",
+      "group": "防耐火構造",
+      "category": "耐火構造",
+      "sub_category": "はり",
+      "duration_min": 60,
+      "part": "はり",
+      "load_bearing": true,
+      "law_article": "建築基準法第2条第七号及び同法施行令第107条第一号(はり:1時間)",
+      "description": "耐火構造 / はり / 60分間"
+    },
+    "FP060BP": {
+      "code": "FP060BP",
+      "group": "防耐火構造",
+      "category": "耐火構造",
+      "sub_category": "耐力壁・間仕切壁",
+      "duration_min": 60,
+      "part": "間仕切壁（耐力壁）",
+      "load_bearing": true,
+      "law_article": "建築基準法第2条第七号並びに同法施行令第107条第一号及び第二号(間仕切壁(耐力壁):各1時間)",
+      "description": "耐火構造 / 耐力壁・間仕切壁 / 60分間"
+    },
+    "FP060CN": {
+      "code": "FP060CN",
+      "group": "防耐火構造",
+      "category": "耐火構造",
+      "sub_category": "柱",
+      "duration_min": 60,
+      "part": "柱",
+      "load_bearing": true,
+      "law_article": "建築基準法第2条第七号及び同法施行令第107条第一号(柱:1時間)",
+      "description": "耐火構造 / 柱 / 60分間"
+    },
+    "FP060FL": {
+      "code": "FP060FL",
+      "group": "防耐火構造",
+      "category": "耐火構造",
+      "sub_category": "床",
+      "duration_min": 60,
+      "part": "床",
+      "load_bearing": true,
+      "law_article": "建築基準法第2条第七号並びに同法施行令第107条第一号及び第二号(床:各1時間)",
+      "description": "耐火構造 / 床 / 60分間"
+    },
+    "FP060NE": {
+      "code": "FP060NE",
+      "group": "防耐火構造",
+      "category": "耐火構造",
+      "sub_category": "非耐力壁・外壁",
+      "duration_min": 60,
+      "part": "外壁（非耐力壁）",
+      "load_bearing": false,
+      "law_article": "建築基準法第2条第七号並びに同法施行令第107条第二号及び第三号(外壁(非耐力壁):各1時間)",
+      "description": "耐火構造 / 非耐力壁・外壁 / 60分間"
+    },
+    "FP060NP": {
+      "code": "FP060NP",
+      "group": "防耐火構造",
+      "category": "耐火構造",
+      "sub_category": "非耐力壁・間仕切壁",
+      "duration_min": 60,
+      "part": "間仕切壁（非耐力壁）",
+      "load_bearing": false,
+      "law_article": "建築基準法第2条第七号及び同法施行令第107条第二号(間仕切壁(非耐力壁):1時間)",
+      "description": "耐火構造 / 非耐力壁・間仕切壁 / 60分間"
+    },
+    "FP120BE": {
+      "code": "FP120BE",
+      "group": "防耐火構造",
+      "category": "耐火構造",
+      "sub_category": "耐力壁・外壁",
+      "duration_min": 120,
+      "part": "外壁（耐力壁）",
+      "load_bearing": true,
+      "law_article": "建築基準法第2条第七号並びに同法施行令第107条第一号、第二号及び第三号(外壁(耐力壁):2時間(第一号)、1時間(第二号及び第三号))",
+      "description": "耐火構造 / 耐力壁・外壁 / 120分間"
+    },
+    "FP120BM": {
+      "code": "FP120BM",
+      "group": "防耐火構造",
+      "category": "耐火構造",
+      "sub_category": "はり",
+      "duration_min": 120,
+      "part": "はり",
+      "load_bearing": true,
+      "law_article": "建築基準法第2条第七号及び同法施行令第107条第一号(はり:2時間)",
+      "description": "耐火構造 / はり / 120分間"
+    },
+    "FP120BP": {
+      "code": "FP120BP",
+      "group": "防耐火構造",
+      "category": "耐火構造",
+      "sub_category": "耐力壁・間仕切壁",
+      "duration_min": 120,
+      "part": "間仕切壁（耐力壁）",
+      "load_bearing": true,
+      "law_article": "建築基準法第2条第七号並びに同法施行令第107条第一号及び第二号(間仕切壁(耐力壁):2時間(第一号)、1時間 (第二号))",
+      "description": "耐火構造 / 耐力壁・間仕切壁 / 120分間"
+    },
+    "FP120CN": {
+      "code": "FP120CN",
+      "group": "防耐火構造",
+      "category": "耐火構造",
+      "sub_category": "柱",
+      "duration_min": 120,
+      "part": "柱",
+      "load_bearing": true,
+      "law_article": "建築基準法第2条第七号及び同法施行令第107条第一号(柱:2時間)",
+      "description": "耐火構造 / 柱 / 120分間"
+    },
+    "FP120FL": {
+      "code": "FP120FL",
+      "group": "防耐火構造",
+      "category": "耐火構造",
+      "sub_category": "床",
+      "duration_min": 120,
+      "part": "床",
+      "load_bearing": true,
+      "law_article": "建築基準法第2条第七号並びに同法施行令第107条第一号及び第二号(床:2時間(第一号)、1時間(第二号))",
+      "description": "耐火構造 / 床 / 120分間"
+    },
+    "FP180BM": {
+      "code": "FP180BM",
+      "group": "防耐火構造",
+      "category": "耐火構造",
+      "sub_category": "はり",
+      "duration_min": 180,
+      "part": "はり",
+      "load_bearing": true,
+      "law_article": "建築基準法第2条第七号及び同法施行令第107条第一号(はり:3時間)",
+      "description": "耐火構造 / はり / 180分間"
+    },
+    "FP180CN": {
+      "code": "FP180CN",
+      "group": "防耐火構造",
+      "category": "耐火構造",
+      "sub_category": "柱",
+      "duration_min": 180,
+      "part": "柱",
+      "load_bearing": true,
+      "law_article": "建築基準法第2条第七号及び同法施行令第107条第一号(柱:3時間)",
+      "description": "耐火構造 / 柱 / 180分間"
+    },
+    "FPC": {
+      "code": "FPC",
+      "group": "防耐火構造",
+      "category": "その他の構造",
+      "sub_category": "煙突周囲の建築物の部分の不燃性",
+      "duration_min": null,
+      "part": "煙突周囲",
+      "load_bearing": null,
+      "law_article": "建築基準法施行令第115条関連",
+      "description": "煙突周囲の建築物の部分の不燃性"
+    },
+    "FRM": {
+      "code": "FRM",
+      "group": "指定建築材料等",
+      "category": "壁倍率",
+      "sub_category": "軸組壁倍率",
+      "duration_min": null,
+      "part": "耐力壁",
+      "load_bearing": true,
+      "law_article": "建築基準法施行令第46条第4項表一の(八)",
+      "description": "壁倍率 / 軸組壁倍率"
+    },
+    "HSB": {
+      "code": "HSB",
+      "group": "指定建築材料等",
+      "category": "鋼材の接合部",
+      "sub_category": "高力ボルト接合",
+      "duration_min": null,
+      "part": "鋼材接合部",
+      "load_bearing": true,
+      "law_article": "建築基準法施行令第68条第3項",
+      "description": "鋼材の接合部 / 高力ボルト接合"
+    },
+    "JC": {
+      "code": "JC",
+      "group": "指定建築材料等",
+      "category": "鋼材の接合部",
+      "sub_category": "継手又は仕口の構造",
+      "duration_min": null,
+      "part": "鋼材接合部",
+      "load_bearing": true,
+      "law_article": "建築基準法施行令第67条第2項",
+      "description": "鋼材の接合部 / 継手又は仕口の構造"
+    },
+    "JM": {
+      "code": "JM",
+      "group": "指定建築材料等",
+      "category": "鋼材の接合部",
+      "sub_category": "鋼材の接合",
+      "duration_min": null,
+      "part": "鋼材接合部",
+      "load_bearing": true,
+      "law_article": "建築基準法施行令第67条第1項",
+      "description": "鋼材の接合部 / 鋼材の接合"
+    },
+    "LAE": {
+      "code": "LAE",
+      "group": "建築設備等",
+      "category": "非常用照明装置",
+      "sub_category": "",
+      "duration_min": null,
+      "part": null,
+      "load_bearing": null,
+      "law_article": "建築基準法施行令第126条の5第二号(非常用照明装置)",
+      "description": "非常用照明装置"
+    },
+    "MAEN": {
+      "code": "MAEN",
+      "group": "指定建築材料等",
+      "category": "指定建築材料",
+      "sub_category": "石綿飛散防止材",
+      "duration_min": null,
+      "part": "指定建築材料",
+      "load_bearing": null,
+      "law_article": "建築基準法第37条第二号",
+      "description": "指定建築材料 / 石綿飛散防止材"
+    },
+    "MALA": {
+      "code": "MALA",
+      "group": "指定建築材料等",
+      "category": "指定建築材料",
+      "sub_category": "アルミニウム合金材",
+      "duration_min": null,
+      "part": "指定建築材料",
+      "load_bearing": null,
+      "law_article": "建築基準法第37条第二号",
+      "description": "指定建築材料 / アルミニウム合金材"
+    },
+    "MALC": {
+      "code": "MALC",
+      "group": "指定建築材料等",
+      "category": "指定建築材料",
+      "sub_category": "軽量気泡コンクリート",
+      "duration_min": null,
+      "part": "指定建築材料",
+      "load_bearing": null,
+      "law_article": "建築基準法第37条第二号",
+      "description": "指定建築材料 / 軽量気泡コンクリート"
+    },
+    "MBLK": {
+      "code": "MBLK",
+      "group": "指定建築材料等",
+      "category": "指定建築材料",
+      "sub_category": "コンクリートブロック",
+      "duration_min": null,
+      "part": "指定建築材料",
+      "load_bearing": null,
+      "law_article": "建築基準法第37条第二号",
+      "description": "指定建築材料 / コンクリートブロック"
+    },
+    "MBLT": {
+      "code": "MBLT",
+      "group": "指定建築材料等",
+      "category": "指定建築材料",
+      "sub_category": "高力ボルト及びボルト",
+      "duration_min": null,
+      "part": "指定建築材料",
+      "load_bearing": null,
+      "law_article": "建築基準法第37条第二号",
+      "description": "指定建築材料 / 高力ボルト及びボルト"
+    },
+    "MCBL": {
+      "code": "MCBL",
+      "group": "指定建築材料等",
+      "category": "指定建築材料",
+      "sub_category": "構造用ケーブル",
+      "duration_min": null,
+      "part": "指定建築材料",
+      "load_bearing": null,
+      "law_article": "建築基準法第37条第二号",
+      "description": "指定建築材料 / 構造用ケーブル"
+    },
+    "MCMU": {
+      "code": "MCMU",
+      "group": "指定建築材料等",
+      "category": "指定建築材料",
+      "sub_category": "セラミックメーソンリーユニット",
+      "duration_min": null,
+      "part": "指定建築材料",
+      "load_bearing": null,
+      "law_article": "建築基準法第37条第二号",
+      "description": "指定建築材料 / セラミックメーソンリーユニット"
+    },
+    "MCON": {
+      "code": "MCON",
+      "group": "指定建築材料等",
+      "category": "指定建築材料",
+      "sub_category": "コンクリート",
+      "duration_min": null,
+      "part": "指定建築材料",
+      "load_bearing": null,
+      "law_article": "建築基準法第37条第二号",
+      "description": "指定建築材料 / コンクリート"
+    },
+    "MF2": {
+      "code": "MF2",
+      "group": "シックハウス対策",
+      "category": "ホルムアルデヒド発散建築材料",
+      "sub_category": "第2種",
+      "duration_min": null,
+      "part": "建築材料",
+      "load_bearing": null,
+      "law_article": "建築基準法施行令第20条の7第2項",
+      "description": "ホルムアルデヒド発散建築材料 / 第2種"
+    },
+    "MF3": {
+      "code": "MF3",
+      "group": "シックハウス対策",
+      "category": "ホルムアルデヒド発散建築材料",
+      "sub_category": "第3種",
+      "duration_min": null,
+      "part": "建築材料",
+      "load_bearing": null,
+      "law_article": "建築基準法施行令第20条の7第3項",
+      "description": "ホルムアルデヒド発散建築材料 / 第3種"
+    },
+    "MFN": {
+      "code": "MFN",
+      "group": "シックハウス対策",
+      "category": "ホルムアルデヒド発散建築材料",
+      "sub_category": "対象外",
+      "duration_min": null,
+      "part": "建築材料",
+      "load_bearing": null,
+      "law_article": "建築基準法施行令第20条の7第4項",
+      "description": "ホルムアルデヒド発散建築材料 / 対象外"
+    },
+    "MMEM": {
+      "code": "MMEM",
+      "group": "指定建築材料等",
+      "category": "指定建築材料",
+      "sub_category": "膜材料及びテント倉庫用膜材料",
+      "duration_min": null,
+      "part": "指定建築材料",
+      "load_bearing": null,
+      "law_article": "建築基準法第37条第二号",
+      "description": "指定建築材料 / 膜材料及びテント倉庫用膜材料"
+    },
+    "MMJT": {
+      "code": "MMJT",
+      "group": "指定建築材料等",
+      "category": "指定建築材料",
+      "sub_category": "トラス用機械式継手",
+      "duration_min": null,
+      "part": "指定建築材料",
+      "load_bearing": null,
+      "law_article": "建築基準法第37条第二号",
+      "description": "指定建築材料 / トラス用機械式継手"
+    },
+    "MPIN": {
+      "code": "MPIN",
+      "group": "指定建築材料等",
+      "category": "指定建築材料",
+      "sub_category": "打込み鋲",
+      "duration_min": null,
+      "part": "指定建築材料",
+      "load_bearing": null,
+      "law_article": "建築基準法第37条第二号",
+      "description": "指定建築材料 / 打込み鋲"
+    },
+    "MSRB": {
+      "code": "MSRB",
+      "group": "指定建築材料等",
+      "category": "指定建築材料",
+      "sub_category": "鉄筋",
+      "duration_min": null,
+      "part": "指定建築材料",
+      "load_bearing": null,
+      "law_article": "建築基準法第37条第二号",
+      "description": "指定建築材料 / 鉄筋"
+    },
+    "MSTL": {
+      "code": "MSTL",
+      "group": "指定建築材料等",
+      "category": "指定建築材料",
+      "sub_category": "構造用鋼材及び鋳鋼",
+      "duration_min": null,
+      "part": "指定建築材料",
+      "load_bearing": null,
+      "law_article": "建築基準法第37条第二号",
+      "description": "指定建築材料 / 構造用鋼材及び鋳鋼"
+    },
+    "MTDN": {
+      "code": "MTDN",
+      "group": "指定建築材料等",
+      "category": "指定建築材料",
+      "sub_category": "緊張材",
+      "duration_min": null,
+      "part": "指定建築材料",
+      "load_bearing": null,
+      "law_article": "建築基準法第37条第二号",
+      "description": "指定建築材料 / 緊張材"
+    },
+    "MTPS": {
+      "code": "MTPS",
+      "group": "指定建築材料等",
+      "category": "指定建築材料",
+      "sub_category": "タッピンねじその他これに類するもの",
+      "duration_min": null,
+      "part": "指定建築材料",
+      "load_bearing": null,
+      "law_article": "建築基準法第37条第二号",
+      "description": "指定建築材料 / タッピンねじその他これに類するもの"
+    },
+    "MTRN": {
+      "code": "MTRN",
+      "group": "指定建築材料等",
+      "category": "指定建築材料",
+      "sub_category": "ターンバックル",
+      "duration_min": null,
+      "part": "指定建築材料",
+      "load_bearing": null,
+      "law_article": "建築基準法第37条第二号",
+      "description": "指定建築材料 / ターンバックル"
+    },
+    "MVBR": {
+      "code": "MVBR",
+      "group": "指定建築材料等",
+      "category": "指定建築材料",
+      "sub_category": "免震材料",
+      "duration_min": null,
+      "part": "指定建築材料",
+      "load_bearing": null,
+      "law_article": "建築基準法第37条第二号",
+      "description": "指定建築材料 / 免震材料"
+    },
+    "MWCM": {
+      "code": "MWCM",
+      "group": "指定建築材料等",
+      "category": "指定建築材料",
+      "sub_category": "木質複合軸材料",
+      "duration_min": null,
+      "part": "指定建築材料",
+      "load_bearing": null,
+      "law_article": "建築基準法第37条第二号",
+      "description": "指定建築材料 / 木質複合軸材料"
+    },
+    "MWGM": {
+      "code": "MWGM",
+      "group": "指定建築材料等",
+      "category": "指定建築材料",
+      "sub_category": "木質接着成形軸材料",
+      "duration_min": null,
+      "part": "指定建築材料",
+      "load_bearing": null,
+      "law_article": "建築基準法第37条第二号",
+      "description": "指定建築材料 / 木質接着成形軸材料"
+    },
+    "MWGP": {
+      "code": "MWGP",
+      "group": "指定建築材料等",
+      "category": "指定建築材料",
+      "sub_category": "木質接着複合パネル",
+      "duration_min": null,
+      "part": "指定建築材料",
+      "load_bearing": null,
+      "law_article": "建築基準法第37条第二号",
+      "description": "指定建築材料 / 木質接着複合パネル"
+    },
+    "MWLD": {
+      "code": "MWLD",
+      "group": "指定建築材料等",
+      "category": "指定建築材料",
+      "sub_category": "溶接材料（炭素鋼、ステンレス鋼及びアルミニウム合金材の溶接）",
+      "duration_min": null,
+      "part": "指定建築材料",
+      "load_bearing": null,
+      "law_article": "建築基準法第37条第二号",
+      "description": "指定建築材料 / 溶接材料（炭素鋼、ステンレス鋼及びアルミニウム合金材の溶接）"
+    },
+    "MWTP": {
+      "code": "MWTP",
+      "group": "指定建築材料等",
+      "category": "指定建築材料",
+      "sub_category": "木質断熱複合パネル",
+      "duration_min": null,
+      "part": "指定建築材料",
+      "load_bearing": null,
+      "law_article": "建築基準法第37条第二号",
+      "description": "指定建築材料 / 木質断熱複合パネル"
+    },
+    "NE": {
+      "code": "NE",
+      "group": "防火材料",
+      "category": "不燃材料",
+      "sub_category": "外部仕上用",
+      "duration_min": 20,
+      "part": "外部仕上げ",
+      "load_bearing": null,
+      "law_article": "建築基準法第2条第九号並びに同法施行令第108条の2第一号及び第二号(不燃材料(外部の仕上げに用いる場合に限る。))",
+      "description": "不燃材料 / 外部仕上用"
+    },
+    "NH030FL": {
+      "code": "NH030FL",
+      "group": "防耐火構造",
+      "category": "その他の構造",
+      "sub_category": "防火壁の設置を要しない建築物の床等",
+      "duration_min": 30,
+      "part": "床",
+      "load_bearing": true,
+      "law_article": "建築基準法施行令第109条の3第二号ハ及び第115条の2第1項第四号(床:各30分間)",
+      "description": "その他の構造 / 防火壁の設置を要しない建築物の床等 / 30分間"
+    },
+    "NM": {
+      "code": "NM",
+      "group": "防火材料",
+      "category": "不燃材料",
+      "sub_category": "一般",
+      "duration_min": 20,
+      "part": "材料全般",
+      "load_bearing": null,
+      "law_article": "建築基準法第2条第九号並びに同法施行令第108条の2第一号、第二号及び第三号(不燃材料)",
+      "description": "不燃材料 / 一般"
+    },
+    "PC030BE": {
+      "code": "PC030BE",
+      "group": "防耐火構造",
+      "category": "防火構造",
+      "sub_category": "耐力壁",
+      "duration_min": 30,
+      "part": "外壁（耐力壁）",
+      "load_bearing": true,
+      "law_article": "建築基準法第2条第八号並びに同法施行令第108条第一号及び第二号(外壁(耐力壁):各30分間)",
+      "description": "防火構造 / 耐力壁 / 30分間"
+    },
+    "PC030NE": {
+      "code": "PC030NE",
+      "group": "防耐火構造",
+      "category": "防火構造",
+      "sub_category": "非耐力壁",
+      "duration_min": 30,
+      "part": "外壁（非耐力壁）",
+      "load_bearing": false,
+      "law_article": "建築基準法第2条第八号並びに同法施行令第108条第二号(外壁(非耐力壁):30分間)",
+      "description": "防火構造 / 非耐力壁 / 30分間"
+    },
+    "PC030RS": {
+      "code": "PC030RS",
+      "group": "防耐火構造",
+      "category": "防火構造",
+      "sub_category": "軒裏",
+      "duration_min": 30,
+      "part": "軒裏",
+      "load_bearing": false,
+      "law_article": "建築基準法第2条第八号並びに同法施行令第108条第二号(軒裏:30分間)",
+      "description": "防火構造 / 軒裏 / 30分間"
+    },
+    "PS045FL": {
+      "code": "PS045FL",
+      "group": "区画",
+      "category": "防火区画を貫通する管",
+      "sub_category": "床",
+      "duration_min": 45,
+      "part": "床",
+      "load_bearing": true,
+      "law_article": "建築基準法施行令第129条の2の5第1項第七号ハ(床:45分間)",
+      "description": "防火区画を貫通する管 / 床 / 45分間"
+    },
+    "PS045WL": {
+      "code": "PS045WL",
+      "group": "区画",
+      "category": "防火区画を貫通する管",
+      "sub_category": "壁",
+      "duration_min": 45,
+      "part": "壁（防火区画貫通部）",
+      "load_bearing": null,
+      "law_article": "建築基準法施行令第129条の2の5第1項第七号ハ(壁:45分間)",
+      "description": "防火区画を貫通する管 / 壁 / 45分間"
+    },
+    "PS060FL": {
+      "code": "PS060FL",
+      "group": "区画",
+      "category": "防火区画を貫通する管",
+      "sub_category": "床",
+      "duration_min": 60,
+      "part": "床",
+      "load_bearing": true,
+      "law_article": "建築基準法施行令第129条の2の5第1項第七号ハ(床:60分間)",
+      "description": "防火区画を貫通する管 / 床 / 60分間"
+    },
+    "PS060WL": {
+      "code": "PS060WL",
+      "group": "区画",
+      "category": "防火区画を貫通する管",
+      "sub_category": "壁",
+      "duration_min": 60,
+      "part": "壁（防火区画貫通部）",
+      "load_bearing": null,
+      "law_article": "建築基準法施行令第129条の2の5第1項第七号ハ(壁:1時間)",
+      "description": "防火区画を貫通する管 / 壁 / 60分間"
+    },
+    "QE": {
+      "code": "QE",
+      "group": "防火材料",
+      "category": "準不燃材料",
+      "sub_category": "外部仕上用",
+      "duration_min": 10,
+      "part": "外部仕上げ",
+      "load_bearing": null,
+      "law_article": "建築基準法施行令第1条第五号並びに第108条の2第一号及び第二号(準不燃材料(外部の仕上げに用いる場合に限る))",
+      "description": "準不燃材料 / 外部仕上用"
+    },
+    "QF030NE": {
+      "code": "QF030NE",
+      "group": "防耐火構造",
+      "category": "準耐火構造",
+      "sub_category": "非耐力壁・外壁",
+      "duration_min": 30,
+      "part": "外壁（非耐力壁）",
+      "load_bearing": false,
+      "law_article": "建築基準法第2条第七号の二並びに同法施行令第107条の2第二号及び第三号(外壁(非耐力壁):各30分間)",
+      "description": "準耐火構造 / 非耐力壁・外壁 / 30分間"
+    },
+    "QF030RF": {
+      "code": "QF030RF",
+      "group": "防耐火構造",
+      "category": "準耐火構造",
+      "sub_category": "屋根",
+      "duration_min": 30,
+      "part": "屋根",
+      "load_bearing": false,
+      "law_article": "建築基準法第2条第七号の二並びに同法施行令第107条の2第一号及び第三号(屋根:各30分間)",
+      "description": "準耐火構造 / 屋根 / 30分間"
+    },
+    "QF030RS": {
+      "code": "QF030RS",
+      "group": "防耐火構造",
+      "category": "準耐火構造",
+      "sub_category": "軒裏",
+      "duration_min": 30,
+      "part": "軒裏",
+      "load_bearing": false,
+      "law_article": "建築基準法第2条第七号の二及び同法施行令第107条の2第二号(軒裏:30分間)",
+      "description": "準耐火構造 / 軒裏 / 30分間"
+    },
+    "QF030ST": {
+      "code": "QF030ST",
+      "group": "防耐火構造",
+      "category": "準耐火構造",
+      "sub_category": "階段",
+      "duration_min": 30,
+      "part": "階段",
+      "load_bearing": null,
+      "law_article": "建築基準法第2条第七号の二及び同法施行令第107条の2第一号(階段:30分間)",
+      "description": "準耐火構造 / 階段 / 30分間"
+    },
+    "QF045BE": {
+      "code": "QF045BE",
+      "group": "防耐火構造",
+      "category": "準耐火構造",
+      "sub_category": "耐力壁・外壁",
+      "duration_min": 45,
+      "part": "外壁（耐力壁）",
+      "load_bearing": true,
+      "law_article": "建築基準法第2条第七号の二並びに同法施行令第107条の2第一号、第二号及び第三号(外壁(耐力壁):各45分間)",
+      "description": "準耐火構造 / 耐力壁・外壁 / 45分間"
+    },
+    "QF045BM": {
+      "code": "QF045BM",
+      "group": "防耐火構造",
+      "category": "準耐火構造",
+      "sub_category": "はり",
+      "duration_min": 45,
+      "part": "はり",
+      "load_bearing": true,
+      "law_article": "建築基準法第2条第七号の二及び同法施行令第107条の2第一号(はり:45分間)",
+      "description": "準耐火構造 / はり / 45分間"
+    },
+    "QF045BP": {
+      "code": "QF045BP",
+      "group": "防耐火構造",
+      "category": "準耐火構造",
+      "sub_category": "耐力壁・間仕切壁",
+      "duration_min": 45,
+      "part": "間仕切壁（耐力壁）",
+      "load_bearing": true,
+      "law_article": "建築基準法第2条第七号の二並びに同法施行令第107条の2第一号及び第二号(間仕切壁(耐力壁):各45分間)",
+      "description": "準耐火構造 / 耐力壁・間仕切壁 / 45分間"
+    },
+    "QF045CE": {
+      "code": "QF045CE",
+      "group": "防耐火構造",
+      "category": "準耐火構造",
+      "sub_category": "強化天井・45分",
+      "duration_min": 45,
+      "part": "強化天井",
+      "load_bearing": false,
+      "law_article": "建築基準法施行令第112条第2項・強化天井関連",
+      "description": "準耐火構造 / 強化天井 / 45分間"
+    },
+    "QF045CN": {
+      "code": "QF045CN",
+      "group": "防耐火構造",
+      "category": "準耐火構造",
+      "sub_category": "柱",
+      "duration_min": 45,
+      "part": "柱",
+      "load_bearing": true,
+      "law_article": "建築基準法第2条第七号の二及び同法施行令第107条の2第一号(柱:45分間)",
+      "description": "準耐火構造 / 柱 / 45分間"
+    },
+    "QF045FL": {
+      "code": "QF045FL",
+      "group": "防耐火構造",
+      "category": "準耐火構造",
+      "sub_category": "床",
+      "duration_min": 45,
+      "part": "床",
+      "load_bearing": true,
+      "law_article": "建築基準法第2条第七号の二並びに同法施行令第107条の2第一号及び第二号(床:各45分間)",
+      "description": "準耐火構造 / 床 / 45分間"
+    },
+    "QF045NE": {
+      "code": "QF045NE",
+      "group": "防耐火構造",
+      "category": "準耐火構造",
+      "sub_category": "非耐力壁・外壁",
+      "duration_min": 45,
+      "part": "外壁（非耐力壁）",
+      "load_bearing": false,
+      "law_article": "建築基準法第2条第七号の二並びに同法施行令第107条の2第二号及び第三号(外壁(非耐力壁):各45分間)",
+      "description": "準耐火構造 / 非耐力壁・外壁 / 45分間"
+    },
+    "QF045NP": {
+      "code": "QF045NP",
+      "group": "防耐火構造",
+      "category": "準耐火構造",
+      "sub_category": "非耐力壁・間仕切壁",
+      "duration_min": 45,
+      "part": "間仕切壁（非耐力壁）",
+      "load_bearing": false,
+      "law_article": "建築基準法第2条第七号の二及び同法施行令第107条の2第二号(間仕切壁(非耐力壁):45分間)",
+      "description": "準耐火構造 / 非耐力壁・間仕切壁 / 45分間"
+    },
+    "QF045RS": {
+      "code": "QF045RS",
+      "group": "防耐火構造",
+      "category": "準耐火構造",
+      "sub_category": "軒裏",
+      "duration_min": 45,
+      "part": "軒裏",
+      "load_bearing": false,
+      "law_article": "建築基準法第2条第七号の二及び同法施行令第107条の2第二号(軒裏:45分間)",
+      "description": "準耐火構造 / 軒裏 / 45分間"
+    },
+    "QF060BE": {
+      "code": "QF060BE",
+      "group": "防耐火構造",
+      "category": "準耐火構造",
+      "sub_category": "耐力壁・外壁",
+      "duration_min": 60,
+      "part": "外壁（耐力壁）",
+      "load_bearing": true,
+      "law_article": "建築基準法施行令第129条の2の3第1項第一号ロ(1)、(2)及び(3)(外壁(耐力壁):各1時間)",
+      "description": "準耐火構造 / 耐力壁・外壁 / 60分間"
+    },
+    "QF060BM": {
+      "code": "QF060BM",
+      "group": "防耐火構造",
+      "category": "準耐火構造",
+      "sub_category": "はり",
+      "duration_min": 60,
+      "part": "はり",
+      "load_bearing": true,
+      "law_article": "建築基準法施行令第129条の2の3第1項第一号ロ(1)(はり:1時間)",
+      "description": "準耐火構造 / はり / 60分間"
+    },
+    "QF060BP": {
+      "code": "QF060BP",
+      "group": "防耐火構造",
+      "category": "準耐火構造",
+      "sub_category": "耐力壁・間仕切壁",
+      "duration_min": 60,
+      "part": "間仕切壁（耐力壁）",
+      "load_bearing": true,
+      "law_article": "建築基準法施行令第129条の2の3第1項第一号ロ(1)及び(2)(間仕切壁(耐力壁):各1時間)",
+      "description": "準耐火構造 / 耐力壁・間仕切壁 / 60分間"
+    },
+    "QF060CE": {
+      "code": "QF060CE",
+      "group": "防耐火構造",
+      "category": "準耐火構造",
+      "sub_category": "強化天井・60分",
+      "duration_min": 60,
+      "part": "強化天井",
+      "load_bearing": false,
+      "law_article": "建築基準法施行令第112条第2項・強化天井関連",
+      "description": "準耐火構造 / 強化天井 / 60分間"
+    },
+    "QF060CN": {
+      "code": "QF060CN",
+      "group": "防耐火構造",
+      "category": "準耐火構造",
+      "sub_category": "柱",
+      "duration_min": 60,
+      "part": "柱",
+      "load_bearing": true,
+      "law_article": "建築基準法施行令第129条の2の3第1項第一号ロ(1)(柱:1時間)",
+      "description": "準耐火構造 / 柱 / 60分間"
+    },
+    "QF060FL": {
+      "code": "QF060FL",
+      "group": "防耐火構造",
+      "category": "準耐火構造",
+      "sub_category": "床",
+      "duration_min": 60,
+      "part": "床",
+      "load_bearing": true,
+      "law_article": "建築基準法施行令第129条の2の3第1項第一号ロ(1)及び(2)(床:各1時間)",
+      "description": "準耐火構造 / 床 / 60分間"
+    },
+    "QF060NE": {
+      "code": "QF060NE",
+      "group": "防耐火構造",
+      "category": "準耐火構造",
+      "sub_category": "非耐力壁・外壁",
+      "duration_min": 60,
+      "part": "外壁（非耐力壁）",
+      "load_bearing": false,
+      "law_article": "建築基準法施行令第129条の2の3第1項第一号ロ(2)及び(3)(外壁(非耐力壁):各1時間)",
+      "description": "準耐火構造 / 非耐力壁・外壁 / 60分間"
+    },
+    "QF060NP": {
+      "code": "QF060NP",
+      "group": "防耐火構造",
+      "category": "準耐火構造",
+      "sub_category": "非耐力壁・間仕切壁",
+      "duration_min": 60,
+      "part": "間仕切壁（非耐力壁）",
+      "load_bearing": false,
+      "law_article": "建築基準法施行令第129条の2の3第1項第一号ロ(2)(間仕切壁(非耐力壁):1時間)",
+      "description": "準耐火構造 / 非耐力壁・間仕切壁 / 60分間"
+    },
+    "QF060RS": {
+      "code": "QF060RS",
+      "group": "防耐火構造",
+      "category": "準耐火構造",
+      "sub_category": "軒裏",
+      "duration_min": 60,
+      "part": "軒裏",
+      "load_bearing": false,
+      "law_article": "建築基準法施行令第129条の2の3第1項第一号ロ(2)(軒裏:1時間)",
+      "description": "準耐火構造 / 軒裏 / 60分間"
+    },
+    "QF075BE": {
+      "code": "QF075BE",
+      "group": "防耐火構造",
+      "category": "準耐火構造",
+      "sub_category": "耐力壁・外壁・75分",
+      "duration_min": 75,
+      "part": "外壁（耐力壁）",
+      "load_bearing": true,
+      "law_article": "建築基準法第2条第七号の二・75分準耐火構造関連（木造3階建学校等）",
+      "description": "準耐火構造 / 耐力壁・外壁 / 75分間"
+    },
+    "QF075BM": {
+      "code": "QF075BM",
+      "group": "防耐火構造",
+      "category": "準耐火構造",
+      "sub_category": "はり・75分",
+      "duration_min": 75,
+      "part": "はり",
+      "load_bearing": true,
+      "law_article": "建築基準法第2条第七号の二・75分準耐火構造関連",
+      "description": "準耐火構造 / はり / 75分間"
+    },
+    "QF075BP": {
+      "code": "QF075BP",
+      "group": "防耐火構造",
+      "category": "準耐火構造",
+      "sub_category": "耐力壁・間仕切壁・75分",
+      "duration_min": 75,
+      "part": "間仕切壁（耐力壁）",
+      "load_bearing": true,
+      "law_article": "建築基準法第2条第七号の二・75分準耐火構造関連",
+      "description": "準耐火構造 / 耐力壁・間仕切壁 / 75分間"
+    },
+    "QF075CN": {
+      "code": "QF075CN",
+      "group": "防耐火構造",
+      "category": "準耐火構造",
+      "sub_category": "柱・75分",
+      "duration_min": 75,
+      "part": "柱",
+      "load_bearing": true,
+      "law_article": "建築基準法第2条第七号の二・75分準耐火構造関連",
+      "description": "準耐火構造 / 柱 / 75分間"
+    },
+    "QF075RS": {
+      "code": "QF075RS",
+      "group": "防耐火構造",
+      "category": "準耐火構造",
+      "sub_category": "軒裏・75分",
+      "duration_min": 75,
+      "part": "軒裏",
+      "load_bearing": false,
+      "law_article": "建築基準法第2条第七号の二・75分準耐火構造関連",
+      "description": "準耐火構造 / 軒裏 / 75分間"
+    },
+    "QF090BE": {
+      "code": "QF090BE",
+      "group": "防耐火構造",
+      "category": "準耐火構造",
+      "sub_category": "耐力壁・外壁・90分",
+      "duration_min": 90,
+      "part": "外壁（耐力壁）",
+      "load_bearing": true,
+      "law_article": "建築基準法第2条第七号の二・90分準耐火構造関連",
+      "description": "準耐火構造 / 耐力壁・外壁 / 90分間"
+    },
+    "QF090CN": {
+      "code": "QF090CN",
+      "group": "防耐火構造",
+      "category": "準耐火構造",
+      "sub_category": "柱・90分",
+      "duration_min": 90,
+      "part": "柱",
+      "load_bearing": true,
+      "law_article": "建築基準法第2条第七号の二・90分準耐火構造関連",
+      "description": "準耐火構造 / 柱 / 90分間"
+    },
+    "QM": {
+      "code": "QM",
+      "group": "防火材料",
+      "category": "準不燃材料",
+      "sub_category": "一般",
+      "duration_min": 10,
+      "part": "材料全般",
+      "load_bearing": null,
+      "law_article": "建築基準法施行令第1条第五号並びに第108条の2第一号、第二号及び第三号(準不燃材料)",
+      "description": "準不燃材料 / 一般"
+    },
+    "QP020BE": {
+      "code": "QP020BE",
+      "group": "防耐火構造",
+      "category": "準防火構造",
+      "sub_category": "耐力壁",
+      "duration_min": 20,
+      "part": "外壁（耐力壁）",
+      "load_bearing": true,
+      "law_article": "建築基準法第23条並びに同法施行令第109条の6第一号及び第二号(外壁(耐力壁):各20分間)",
+      "description": "準防火構造 / 耐力壁 / 20分間"
+    },
+    "QP020NE": {
+      "code": "QP020NE",
+      "group": "防耐火構造",
+      "category": "準防火構造",
+      "sub_category": "非耐力壁・外壁",
+      "duration_min": 20,
+      "part": "外壁（非耐力壁）",
+      "load_bearing": false,
+      "law_article": "建築基準法第23条・施行令第109条の6第二号（外壁（非耐力壁）：20分間）",
+      "description": "準防火構造 / 非耐力壁・外壁 / 20分間"
+    },
+    "RE": {
+      "code": "RE",
+      "group": "防火材料",
+      "category": "難燃材料",
+      "sub_category": "外部仕上用",
+      "duration_min": 5,
+      "part": "外部仕上げ",
+      "load_bearing": null,
+      "law_article": "建築基準法施行令第1条第六号並びに第108条の2第一号及び第二号(難燃材料(外部の仕上げに用いる場合に限る))",
+      "description": "難燃材料 / 外部仕上用"
+    },
+    "RLFC": {
+      "code": "RLFC",
+      "group": "シックハウス対策",
+      "category": "年間ホルムアルデヒド量を保つ居室",
+      "sub_category": "",
+      "duration_min": null,
+      "part": "居室",
+      "load_bearing": null,
+      "law_article": "建築基準法施行令第20条の7第9項",
+      "description": "年間ホルムアルデヒド量を保つ居室"
+    },
+    "RM": {
+      "code": "RM",
+      "group": "防火材料",
+      "category": "難燃材料",
+      "sub_category": "一般",
+      "duration_min": 5,
+      "part": "材料全般",
+      "load_bearing": null,
+      "law_article": "建築基準法施行令第1条第六号及び第108条の2(難燃材料)",
+      "description": "難燃材料 / 一般"
+    },
+    "SNNN": {
+      "code": "SNNN",
+      "group": "建築物／工作物",
+      "category": "工作物",
+      "sub_category": "工作物（時刻歴応答解析等）",
+      "duration_min": null,
+      "part": "工作物",
+      "load_bearing": null,
+      "law_article": "建築基準法施行令第139条・第140条・第144条",
+      "description": "工作物の構造方法等の認定（4文字旧形式含む）"
+    },
+    "SOC": {
+      "code": "SOC",
+      "group": "区画",
+      "category": "天井の遮音構造",
+      "sub_category": "界壁を小屋裏・天井裏まで達しない場合の天井遮音構造",
+      "duration_min": null,
+      "part": "天井",
+      "load_bearing": false,
+      "law_article": "建築基準法第30条・施行令第22条の3関連",
+      "description": "天井の遮音構造（遮音性能）"
+    },
+    "SOI": {
+      "code": "SOI",
+      "group": "区画",
+      "category": "界壁の遮音構造",
+      "sub_category": "",
+      "duration_min": null,
+      "part": "界壁",
+      "load_bearing": null,
+      "law_article": "建築基準法第30条及び同法施行令第22条の3(界壁の遮音構造)",
+      "description": "界壁の遮音構造"
+    },
+    "SPRG": {
+      "code": "SPRG",
+      "group": "その他の構造規定",
+      "category": "構造計算プログラム",
+      "sub_category": "大臣認定プログラム（法第20条関係）",
+      "duration_min": null,
+      "part": "構造計算プログラム",
+      "load_bearing": null,
+      "law_article": "建築基準法第20条第1項第二号イ・第三号イ",
+      "description": "大臣認定構造計算プログラム"
+    },
+    "TACP": {
+      "code": "TACP",
+      "group": "その他の構造規定",
+      "category": "基礎ぐいの許容支持力",
+      "sub_category": "",
+      "duration_min": null,
+      "part": "基礎ぐい",
+      "load_bearing": true,
+      "law_article": "建築基準法施行規則第1条の3第1項本文",
+      "description": "基礎ぐいの許容支持力"
+    },
+    "TBFC": {
+      "code": "TBFC",
+      "group": "指定建築材料等",
+      "category": "壁倍率",
+      "sub_category": "枠組壁倍率",
+      "duration_min": null,
+      "part": "耐力壁",
+      "load_bearing": true,
+      "law_article": "建築基準法施行規則第8条の3",
+      "description": "壁倍率 / 枠組壁倍率"
+    },
+    "TFBH": {
+      "code": "TFBH",
+      "group": "その他の構造規定",
+      "category": "鉄骨製作工場において溶接された鉄骨を用いる建築物の溶接部",
+      "sub_category": "Hグレード",
+      "duration_min": null,
+      "part": "鉄骨溶接部",
+      "load_bearing": true,
+      "law_article": "建築基準法施行規則第1条の3第1項第一号",
+      "description": "鉄骨製作工場において溶接された鉄骨を用いる建築物の溶接部 / Hグレード"
+    },
+    "TFBJ": {
+      "code": "TFBJ",
+      "group": "その他の構造規定",
+      "category": "鉄骨製作工場において溶接された鉄骨を用いる建築物の溶接部",
+      "sub_category": "Jグレード",
+      "duration_min": null,
+      "part": "鉄骨溶接部",
+      "load_bearing": true,
+      "law_article": "建築基準法施行規則第1条の3第1項第一号",
+      "description": "鉄骨製作工場において溶接された鉄骨を用いる建築物の溶接部 / Jグレード"
+    },
+    "TFBM": {
+      "code": "TFBM",
+      "group": "その他の構造規定",
+      "category": "鉄骨製作工場において溶接された鉄骨を用いる建築物の溶接部",
+      "sub_category": "Mグレード",
+      "duration_min": null,
+      "part": "鉄骨溶接部",
+      "load_bearing": true,
+      "law_article": "建築基準法施行規則第1条の3第1項第一号",
+      "description": "鉄骨製作工場において溶接された鉄骨を用いる建築物の溶接部 / Mグレード"
+    },
+    "TFBR": {
+      "code": "TFBR",
+      "group": "その他の構造規定",
+      "category": "鉄骨製作工場において溶接された鉄骨を用いる建築物の溶接部",
+      "sub_category": "Rグレード",
+      "duration_min": null,
+      "part": "鉄骨溶接部",
+      "load_bearing": true,
+      "law_article": "建築基準法施行規則第1条の3第1項第一号",
+      "description": "鉄骨製作工場において溶接された鉄骨を用いる建築物の溶接部 / Rグレード"
+    },
+    "TFBS": {
+      "code": "TFBS",
+      "group": "その他の構造規定",
+      "category": "鉄骨製作工場において溶接された鉄骨を用いる建築物の溶接部",
+      "sub_category": "Sグレード",
+      "duration_min": null,
+      "part": "鉄骨溶接部",
+      "load_bearing": true,
+      "law_article": "建築基準法施行規則第1条の3第1項第一号",
+      "description": "鉄骨製作工場において溶接された鉄骨を用いる建築物の溶接部 / Sグレード"
+    },
+    "TOPB": {
+      "code": "TOPB",
+      "group": "その他の構造規定",
+      "category": "二以上の工期に分ける既存不適格建築物",
+      "sub_category": "",
+      "duration_min": null,
+      "part": null,
+      "load_bearing": null,
+      "law_article": "建築基準法施行規則第1条の3関連",
+      "description": "二以上の工期に分ける既存不適格建築物"
+    },
+    "TPPG": {
+      "code": "TPPG",
+      "group": "その他の構造規定",
+      "category": "プレハブ駐車場",
+      "sub_category": "",
+      "duration_min": null,
+      "part": null,
+      "load_bearing": null,
+      "law_article": "建築基準法施行規則第1条の3第1項本文",
+      "description": "プレハブ駐車場"
+    },
+    "TPRG": {
+      "code": "TPRG",
+      "group": "その他の構造規定",
+      "category": "構造計算プログラム",
+      "sub_category": "",
+      "duration_min": null,
+      "part": null,
+      "load_bearing": null,
+      "law_article": "建築基準法施行規則第1条の3第1項本文",
+      "description": "構造計算プログラム"
+    },
+    "TRCB": {
+      "code": "TRCB",
+      "group": "その他の構造規定",
+      "category": "建築物等の図書省略",
+      "sub_category": "RC造",
+      "duration_min": null,
+      "part": null,
+      "load_bearing": null,
+      "law_article": "建築基準法施行規則第1条の3第1項本文",
+      "description": "建築物等の図書省略 / RC造"
+    },
+    "TSTB": {
+      "code": "TSTB",
+      "group": "その他の構造規定",
+      "category": "建築物等の図書省略",
+      "sub_category": "鉄骨造",
+      "duration_min": null,
+      "part": null,
+      "load_bearing": null,
+      "law_article": "建築基準法施行規則第1条の3第1項本文",
+      "description": "建築物等の図書省略 / 鉄骨造"
+    },
+    "TWDB": {
+      "code": "TWDB",
+      "group": "その他の構造規定",
+      "category": "建築物等の図書省略",
+      "sub_category": "木造",
+      "duration_min": null,
+      "part": null,
+      "load_bearing": null,
+      "law_article": "建築基準法施行規則第1条の3第1項本文",
+      "description": "建築物等の図書省略 / 木造"
+    },
+    "UR": {
+      "code": "UR",
+      "group": "防耐火構造",
+      "category": "飛び火構造",
+      "sub_category": "22条指定区域の屋根・一般",
+      "duration_min": null,
+      "part": "屋根",
+      "load_bearing": false,
+      "law_article": "建築基準法第22条第1項並びに同法施行令第109条の5第一号及び第二号(同法第22条第1項の市街地の区域内にある建築物の屋根)",
+      "description": "飛び火構造 / 22条指定区域の屋根・一般"
+    },
+    "UW": {
+      "code": "UW",
+      "group": "防耐火構造",
+      "category": "飛び火構造",
+      "sub_category": "22条指定区域の屋根・不燃性物品保管倉庫",
+      "duration_min": null,
+      "part": "屋根",
+      "load_bearing": false,
+      "law_article": "建築基準法第22条第1項及び同法施行令第109条の5第一号(同法第22条第1項の市街地の区域内にある建築物の屋根(不燃性の物品を保管する倉庫用))",
+      "description": "飛び火構造 / 22条指定区域の屋根・不燃性物品保管倉庫"
+    },
+    "VEC": {
+      "code": "VEC",
+      "group": "建築設備等",
+      "category": "火気使用室の換気設備",
+      "sub_category": "",
+      "duration_min": null,
+      "part": null,
+      "load_bearing": null,
+      "law_article": "建築基準法施行令第20条の3第2項第一号ロ(火気使用室の換気設備)",
+      "description": "火気使用室の換気設備"
+    }
+  },
+  "building_code_rules": {
+    "source_pdf": "001069848.pdf",
+    "format": "①②③④⑤⑥⑦-*****(通算番号5桁)-*(変更回数)",
+    "note": "平成25年頃以前の旧付番では4文字・5文字コード（例: HNNN, MNNN, NNNB, SNNN 等）も存在する。",
+    "positions": [
+      {
+        "position": 1,
+        "name": "構造計算（時刻歴応答解析等）",
+        "codes": {
+          "H": {
+            "ja": "超高層建築物（高さ60m超）",
+            "law_article": "建築基準法第20条"
+          },
+          "M": {
+            "ja": "超高層以外の建築物",
+            "law_article": "建築基準法第20条"
+          },
+          "S": {
+            "ja": "工作物",
+            "law_article": "建築基準法施行令第139条・第140条・第144条"
+          },
+          "N": {
+            "ja": "非該当",
+            "law_article": ""
+          }
+        }
+      },
+      {
+        "position": 2,
+        "name": "主要構造部の耐火性能",
+        "codes": {
+          "F": {
+            "ja": "耐火性能",
+            "law_article": "建築基準法施行令第108条の3第1項"
+          },
+          "S": {
+            "ja": "延焼拡大防止性能",
+            "law_article": "建築基準法施行令第112条第3項"
+          },
+          "N": {
+            "ja": "非該当",
+            "law_article": ""
+          }
+        }
+      },
+      {
+        "position": 3,
+        "name": "防火設備（防火区画）",
+        "codes": {
+          "E": {
+            "ja": "該当",
+            "law_article": "建築基準法施行令第108条の3第4項"
+          },
+          "N": {
+            "ja": "非該当",
+            "law_article": ""
+          }
+        }
+      },
+      {
+        "position": 4,
+        "name": "避難安全性能",
+        "codes": {
+          "B": {
+            "ja": "全館避難安全性能",
+            "law_article": "建築基準法施行令第129条の2第1項"
+          },
+          "F": {
+            "ja": "階避難安全性能",
+            "law_article": "建築基準法施行令第129条第1項"
+          },
+          "S": {
+            "ja": "区画避難安全性能",
+            "law_article": "建築基準法施行令第128条の6第1項"
+          },
+          "N": {
+            "ja": "非該当",
+            "law_article": ""
+          }
+        }
+      },
+      {
+        "position": 5,
+        "name": "主要構造部等の性能",
+        "codes": {
+          "L": {
+            "ja": "大規模建築物の主要構造部等",
+            "law_article": "建築基準法第21条第1項"
+          },
+          "S": {
+            "ja": "耐火建築物等とすべき特殊建築物",
+            "law_article": "建築基準法第27条第1項"
+          },
+          "P": {
+            "ja": "防火地域・準防火地域内の建築物",
+            "law_article": "建築基準法第61条第1項"
+          },
+          "N": {
+            "ja": "非該当",
+            "law_article": ""
+          }
+        }
+      },
+      {
+        "position": 6,
+        "name": "防排煙性能",
+        "codes": {
+          "S": {
+            "ja": "特別避難階段の階段室等",
+            "law_article": "建築基準法施行令第123条第3項第二号"
+          },
+          "E": {
+            "ja": "非常用エレベーターの昇降路等",
+            "law_article": "建築基準法施行令第129条の13の3第13項"
+          },
+          "W": {
+            "ja": "兼用付室",
+            "law_article": "建築基準法施行令第123条第3項第二号・第129条の13の3第13項"
+          },
+          "N": {
+            "ja": "非該当",
+            "law_article": ""
+          }
+        }
+      },
+      {
+        "position": 7,
+        "name": "非常用進入口",
+        "codes": {
+          "E": {
+            "ja": "該当",
+            "law_article": "建築基準法施行令第126条の6第1項第三号"
+          },
+          "N": {
+            "ja": "非該当",
+            "law_article": ""
+          }
+        }
+      }
+    ]
+  },
+  "elevator_and_amusement_rules": {
+    "source_pdf": "001069849.pdf",
+    "elevator": {
+      "prefix": "E",
+      "format": "E①②③④⑤-****（英6文字・旧4文字形式あり）",
+      "positions": [
+        {
+          "position": 1,
+          "name": "かご及び主要な支持部分",
+          "codes": {
+            "P": "該当",
+            "N": "非該当"
+          },
+          "law_article": "建築基準法施行令第129条の4第1項第三号"
+        },
+        {
+          "position": 2,
+          "name": "制御器",
+          "codes": {
+            "C": "該当",
+            "N": "非該当"
+          },
+          "law_article": "建築基準法施行令第129条の8第2項"
+        },
+        {
+          "position": 3,
+          "name": "制動装置",
+          "codes": {
+            "S": "該当",
+            "N": "非該当"
+          },
+          "law_article": "建築基準法施行令第129条の10第2項"
+        },
+        {
+          "position": 4,
+          "name": "戸開走行保護装置",
+          "codes": {
+            "U": "該当",
+            "N": "非該当"
+          },
+          "law_article": "建築基準法施行令第129条の10第4項（第3項第一号）"
+        },
+        {
+          "position": 5,
+          "name": "地震時管制運転装置",
+          "codes": {
+            "U": "該当",
+            "N": "非該当"
+          },
+          "law_article": "建築基準法施行令第129条の10第4項（第3項第二号）"
+        }
+      ]
+    },
+    "escalator": {
+      "prefix": "ES",
+      "format": "ES①②③-****（英5文字）",
+      "positions": [
+        {
+          "position": 1,
+          "name": "かご及び主要な支持部分",
+          "codes": {
+            "P": "該当",
+            "N": "非該当"
+          },
+          "law_article": "建築基準法施行令第129条の12第2項（第129条の4第1項第三号準用）"
+        },
+        {
+          "position": 2,
+          "name": "制動装置",
+          "codes": {
+            "S": "該当",
+            "N": "非該当"
+          },
+          "law_article": "建築基準法施行令第129条の12第5項"
+        },
+        {
+          "position": 3,
+          "name": "エスカレーター脱落防止",
+          "codes": {
+            "F": "該当",
+            "N": "非該当"
+          },
+          "law_article": "建築基準法施行令第129条の12第1項第六号"
+        }
+      ]
+    },
+    "amusement_facility": {
+      "prefix": "A",
+      "format": "A①②③-****（英4文字）",
+      "positions": [
+        {
+          "position": 1,
+          "name": "主要な支持部分",
+          "codes": {
+            "P": "該当",
+            "N": "非該当"
+          },
+          "law_article": "建築基準法施行令第144条第二号（第129条の4第1項第三号準用）"
+        },
+        {
+          "position": 2,
+          "name": "客席部分",
+          "codes": {
+            "S": "該当",
+            "N": "非該当"
+          },
+          "law_article": "建築基準法施行令第144条第4号イ"
+        },
+        {
+          "position": 3,
+          "name": "非常止め装置",
+          "codes": {
+            "E": "該当",
+            "N": "非該当"
+          },
+          "law_article": "建築基準法施行令第144条第6号"
+        }
+      ]
+    }
+  }
+}

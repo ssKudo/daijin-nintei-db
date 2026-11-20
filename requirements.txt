@@ -1,0 +1,18 @@
+# Core runtime (`daijin_nintei` & `tools/screen_cert_ids.py` for text/md/csv/json)
+# has ZERO third-party dependencies (Python 3.10+ standard library only).
+#
+# Install optional extras as needed via pyproject.toml, e.g.:
+#   pip install -e ".[pdf,dxf]"
+#   pip install -e ".[dev]"
+#
+# Optional file format parsers:
+# pymupdf>=1.24.0        # PDF text extraction (.pdf) & data pipeline
+# ezdxf>=1.1.0           # AutoCAD DXF text extraction (.dxf)
+# ifcopenshell>=0.7.0    # BIM IFC extraction (.ifc)
+#
+# Optional data rebuild scripts (scripts/):
+# pdfplumber>=0.11.0     # Reference PDF symbol-rule extraction
+# requests>=2.31.0       # MLIT PDF downloader
+#
+# Development / testing:
+# pytest>=8.0.0

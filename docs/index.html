@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>大臣認定データベース｜daijin-nintei-db（建築基準法 構造方法等認定 検索・デコーダ・一括スクリーニング）</title>
+  <meta name="description" content="国土交通省公開帳簿（令和5年4月30日基準・PDL1.0）に基づく建築基準法・大臣認定データベースの静的Webアプリ。認定番号検索、最新番号対応デコーダ、完全ローカル図書一括スクリーニングを提供。">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%234338ca'/%3E%3Cpath d='M8 24V11l8-5 8 5v13M13 24v-6h6v6M12 13h2v2h-2zm6 0h2v2h-2z' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 21h18"/>
+            <path d="M5 21V8l7-5 7 5v13"/>
+            <path d="M9 21v-6h6v6"/>
+            <path d="M9 10h.01M15 10h.01"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1 class="brand-title">
+            <span>大臣認定データベース</span>
+            <span class="brand-slug">daijin-nintei-db</span>
+          </h1>
+          <p class="brand-subtitle">建築基準法 構造方法等認定 検索・記号デコーダ・図書一括スクリーニング（非公式オープンデータ）</p>
+        </div>
+      </div>
+
+      <div class="header-meta">
+        <span id="badge-total-records" class="meta-badge meta-badge--primary" title="国交省公開帳簿からインデックス化した総件数">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3"/></svg>
+          <span>読み込み中…</span>
+        </span>
+        <span id="badge-data-date" class="meta-badge meta-badge--date">
+          データ基準日：令和5年4月30日（国交省公開帳簿）
+        </span>
+        <button id="btn-theme-toggle" type="button" class="icon-btn" aria-label="テーマ切替" title="ライト／ダークテーマ切替">
+          <span id="theme-icon" aria-hidden="true">🌙</span>
+          <span id="theme-label">ダーク</span>
+        </button>
+        <a class="icon-btn" href="https://github.com/ssKudo/daijin-nintei-db" target="_blank" rel="noopener noreferrer" title="GitHubリポジトリを開く">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.09 3.29 9.4 7.86 10.92.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.06 11.06 0 0 1 5.79 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.69 5.39-5.26 5.68.41.36.78 1.06.78 2.14 0 1.55-.01 2.8-.01 3.18 0 .31.21.68.8.56A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/></svg>
+          <span>GitHub</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <nav class="tab-nav-wrap" aria-label="機能切替">
+    <div class="container">
+      <div class="tab-nav" role="tablist">
+        <button id="tab-btn-search" class="tab-btn" role="tab" aria-selected="true" aria-controls="panel-search" data-tab="search" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <span>大臣認定 検索</span>
+          <span class="tab-pill">台帳</span>
+        </button>
+        <button id="tab-btn-decoder" class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-decoder" data-tab="decoder" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          <span>認定番号 デコーダ</span>
+          <span class="tab-pill">最新番号対応</span>
+        </button>
+        <button id="tab-btn-batch" class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-batch" data-tab="batch" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="m9 15 2 2 4-4"/></svg>
+          <span>一括スクリーニング</span>
+          <span class="tab-pill">ローカル処理</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="site-main">
+    <div class="container">
+      <!-- Global Load Error Banner (hidden by default) -->
+      <div id="global-error" class="status-banner status-banner--invalid hidden" role="alert">
+        <div class="status-banner-title">データの読み込みに失敗しました</div>
+        <p id="global-error-msg"></p>
+      </div>
+
+      <!-- ================================================================
+           TAB 1: 大臣認定 検索 (Search)
+           ================================================================ -->
+      <section id="panel-search" class="tab-panel is-active" role="tabpanel" aria-labelledby="tab-btn-search">
+        <div class="card">
+          <div class="search-controls-grid">
+            <div>
+              <label class="field-label" for="search-category">カテゴリ選択（オンデマンド読込）</label>
+              <select id="search-category" class="select">
+                <option value="">カテゴリを読み込み中…</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="search-query">キーワード検索（認定番号・申請者／メーカー・構造方法名・評価機関）</label>
+              <div class="search-input-wrap">
+                <svg class="search-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                <input id="search-query" class="input" type="search" placeholder="例：QF045BE、ニチハ、石膏ボード、日本建築センター（スペース区切りAND検索）" autocomplete="off">
+                <button id="btn-clear-query" type="button" class="search-clear-btn hidden" aria-label="検索語をクリア">×</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="search-filters-row">
+            <div>
+              <label class="field-label" for="search-prefix">認定記号フィルタ</label>
+              <select id="search-prefix" class="select">
+                <option value="">すべての記号</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="search-period">帳簿区分（期間）</label>
+              <select id="search-period" class="select">
+                <option value="">すべて（H25以前＋H25以降）</option>
+                <option value="H25_after">平成25年4月以降（H25_after）</option>
+                <option value="H25_before">平成25年3月以前（H25_before）</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="search-sort">並び順</label>
+              <select id="search-sort" class="select">
+                <option value="date_desc">認定年月日（新しい順）</option>
+                <option value="date_asc">認定年月日（古い順）</option>
+                <option value="cert_asc">認定番号（昇順）</option>
+                <option value="applicant_asc">申請者名（昇順）</option>
+              </select>
+            </div>
+            <div>
+              <button id="btn-reset-filters" type="button" class="btn">条件リセット</button>
+            </div>
+          </div>
+
+          <div class="scope-bar">
+            <div class="scope-actions">
+              <button id="btn-load-popular" type="button" class="btn btn--sm">主要防耐火セット読込（防耐火・材料・設備・遮音）</button>
+              <button id="btn-load-all" type="button" class="btn btn--sm btn--primary">全カテゴリ一括読込</button>
+              <label class="toggle-check">
+                <input id="chk-search-all-loaded" type="checkbox">
+                <span>読込済み全カテゴリを横断検索（<span id="loaded-cat-count" class="mono">0</span>カテゴリ読込済）</span>
+              </label>
+            </div>
+            <div class="scope-actions">
+              <a class="btn btn--sm btn--amber" href="https://www.seinokyo.jp/ninteidb/pub/" target="_blank" rel="noopener noreferrer">
+                令和5年5月以降の最新確認（性能協DB ↗）
+              </a>
+            </div>
+          </div>
+
+          <!-- Progress bar for batch/all category loading -->
+          <div id="search-progress-box" class="progress-box hidden" aria-live="polite">
+            <div class="progress-header">
+              <span id="search-progress-text">カテゴリを読み込み中…</span>
+              <span id="search-progress-pct" class="mono">0%</span>
+            </div>
+            <div class="progress-track">
+              <div id="search-progress-fill" class="progress-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Results Card -->
+        <div class="card">
+          <div class="results-toolbar">
+            <div id="search-results-summary" class="results-count">データを読み込み中…</div>
+            <div class="toolbar-right">
+              <label class="sr-only" for="search-page-size">1ページの表示件数</label>
+              <select id="search-page-size" class="select" style="width: auto; padding: 5px 10px; font-size: 0.82rem;">
+                <option value="50">50件 / 頁</option>
+                <option value="100" selected>100件 / 頁</option>
+                <option value="200">200件 / 頁</option>
+              </select>
+              <button id="btn-export-search-csv" type="button" class="btn btn--sm" disabled>検索結果をCSV出力</button>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width: 155px;">認定番号</th>
+                  <th style="width: 155px;">カテゴリ</th>
+                  <th>構造方法等の名称</th>
+                  <th style="width: 220px;">申請者（メーカー等）</th>
+                  <th style="width: 125px;">認定年月日</th>
+                  <th style="width: 82px;">区分</th>
+                </tr>
+              </thead>
+              <tbody id="search-tbody">
+                <tr><td colspan="6" class="empty-state">データを読み込み中です…</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div id="search-pagination" class="pagination hidden">
+            <div id="search-page-range" class="page-info"></div>
+            <div class="pagination-controls">
+              <button id="btn-page-first" type="button" class="btn btn--sm">最初</button>
+              <button id="btn-page-prev" type="button" class="btn btn--sm">前へ</button>
+              <span id="search-page-num" class="page-info">1 / 1</span>
+              <button id="btn-page-next" type="button" class="btn btn--sm">次へ</button>
+              <button id="btn-page-last" type="button" class="btn btn--sm">最後</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           TAB 2: 認定番号 デコーダ (Symbol Decoder)
+           ================================================================ -->
+      <section id="panel-decoder" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-decoder">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">大臣認定番号 シンボルデコーダ</h2>
+              <p class="card-desc">
+                国交省の付番規則に基づき、記号から構造種別・耐火時間・対象部位・耐力区分・根拠条文を即時分解します。<strong>令和5年5月以降の最新認定番号（2024〜2026年等）</strong>も記号解析が可能です。
+              </p>
+            </div>
+          </div>
+
+          <form id="decoder-form" class="decoder-input-row" autocomplete="off">
+            <label class="sr-only" for="decoder-input">認定番号を入力</label>
+            <input id="decoder-input" class="input" type="text" placeholder="例：QF045BE-1232、FP060NE-0001、NM-8585（全角入力可）" spellcheck="false">
+            <button type="submit" class="btn btn--primary">解析する</button>
+            <button id="btn-decoder-copy" type="button" class="btn">番号コピー</button>
+          </form>
+
+          <div class="sample-chips" aria-label="サンプル番号">
+            <span class="sample-chips-label">サンプル：</span>
+            <button type="button" class="chip-btn" data-sample="QF045BE-1232"><code>QF045BE-1232</code> <span>45分準耐火外壁</span></button>
+            <button type="button" class="chip-btn" data-sample="FP060NE-0001"><code>FP060NE-0001</code> <span>60分耐火非耐力外壁</span></button>
+            <button type="button" class="chip-btn" data-sample="NM-8585"><code>NM-8585</code> <span>不燃材料</span></button>
+            <button type="button" class="chip-btn" data-sample="SOI-0160"><code>SOI-0160</code> <span>界壁遮音構造</span></button>
+            <button type="button" class="chip-btn" data-sample="EB-0001"><code>EB-0001</code> <span>外壁防火設備</span></button>
+            <button type="button" class="chip-btn" data-sample="PS060WL-1239"><code>PS060WL-1239</code> <span>区画貫通部</span></button>
+            <button type="button" class="chip-btn" data-sample="QF045BE-9999"><code>QF045BE-9999</code> <span>未掲載・最新想定</span></button>
+          </div>
+        </div>
+
+        <!-- Decoder Output Area -->
+        <div id="decoder-output" class="hidden">
+          <div class="card">
+            <div class="card-header" style="margin-bottom: 8px;">
+              <div>
+                <h3 class="card-title">
+                  <span>記号構造の分解結果</span>
+                  <span id="decoder-norm-badge" class="cert-pill"></span>
+                </h3>
+              </div>
+              <div id="decoder-validity-badge"></div>
+            </div>
+            <div id="decoder-token-strip" class="token-strip"></div>
+            <div id="decoder-warnings"></div>
+          </div>
+
+          <div class="decoder-grid">
+            <!-- Left: Rule Breakdown -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">建築基準法・記号スペック解析</h3>
+              </div>
+              <dl id="decoder-spec-dl" class="spec-dl"></dl>
+            </div>
+
+            <!-- Right: Ledger Lookup Result -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">R5.4.30 国交省公開帳簿 照合結果</h3>
+              </div>
+              <div id="decoder-ledger-result">
+                <p class="card-desc">照合中…</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Reference Accordion -->
+        <details class="ref-accordion">
+          <summary>
+            <span>大臣認定番号 記号早見表（構造種別・部位コード・防火材料・防火設備・その他）</span>
+            <span class="badge badge--neutral">クリックして展開</span>
+          </summary>
+          <div id="decoder-ref-body" class="ref-accordion-body">
+            <p class="card-desc">早見表を準備しています…</p>
+          </div>
+        </details>
+      </section>
+
+      <!-- ================================================================
+           TAB 3: 一括スクリーニング (Batch Screening)
+           ================================================================ -->
+      <section id="panel-batch" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-batch">
+        <div class="privacy-banner" role="note">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="flex-shrink: 0;" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <div>
+            <strong>完全ローカル処理・外部送信なし</strong>
+            <span>貼り付けたテキストやドロップした仕様書・仕上表・CSV・DXFファイルはすべてブラウザ内（メモリ上）でのみ解析されます。社外秘の図面データ等が外部サーバーへ送信されることは一切ありません。</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">図書・仕様書 大臣認定番号 一括スクリーニング</h2>
+              <p class="card-desc">
+                テキスト中の認定番号を自動抽出し、記号デコード・R5.4公開帳簿との照合・周辺記載（耐火時間／耐力壁／部位等）との整合性アラートを一括チェックします。
+              </p>
+            </div>
+            <button id="btn-batch-sample" type="button" class="btn btn--sm">サンプルテキストを挿入</button>
+          </div>
+
+          <div class="batch-input-grid">
+            <div>
+              <label class="field-label" for="batch-textarea">テキスト貼り付け（仕上表・建具表・特記仕様書・CSV・議事録等）</label>
+              <textarea id="batch-textarea" class="textarea" placeholder="ここにテキストを貼り付けてください。&#10;例：&#10;外壁（60分耐火・耐力壁）：QF045BE-1232&#10;内装不燃ボード：NM-8585&#10;防火設備（外壁開口）：EB-0001"></textarea>
+            </div>
+            <div>
+              <span class="field-label">ローカルファイル読み込み（複数可）</span>
+              <div id="batch-dropzone" class="dropzone" tabindex="0" role="button" aria-label="ファイルをドロップまたはクリックして選択">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="color: var(--indigo-text);" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <div class="dropzone-title">ここにファイルをドロップ、またはクリックして選択</div>
+                <div class="dropzone-sub">対応形式：.txt / .csv / .md / .dxf / .tsv / .json（プレーンテキスト読込）</div>
+                <input id="batch-file-input" type="file" multiple accept=".txt,.csv,.md,.dxf,.tsv,.json,.xml,.html,.log" class="hidden">
+              </div>
+              <div id="batch-file-chips" class="file-chips"></div>
+            </div>
+          </div>
+
+          <div class="batch-actions">
+            <div class="scope-actions">
+              <button id="btn-batch-run" type="button" class="btn btn--primary">スクリーニング実行</button>
+              <button id="btn-batch-clear" type="button" class="btn">クリア</button>
+            </div>
+            <span id="batch-status-msg" class="card-desc" style="margin: 0;"></span>
+          </div>
+
+          <div id="batch-progress-box" class="progress-box hidden" aria-live="polite">
+            <div class="progress-header">
+              <span id="batch-progress-text">該当カテゴリ帳簿を読み込み中…</span>
+              <span id="batch-progress-pct" class="mono">0%</span>
+            </div>
+            <div class="progress-track">
+              <div id="batch-progress-fill" class="progress-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Batch Results Area -->
+        <div id="batch-results-section" class="hidden">
+          <!-- KPI Summary Cards -->
+          <div class="kpi-grid">
+            <div class="kpi-card kpi-card--total">
+              <div class="kpi-label">検出件数</div>
+              <div id="kpi-total" class="kpi-value">0</div>
+              <div id="kpi-unique-sub" class="kpi-sub">ユニーク 0 番号</div>
+            </div>
+            <div class="kpi-card kpi-card--found">
+              <div class="kpi-label">R5.4台帳一致</div>
+              <div id="kpi-found" class="kpi-value">0</div>
+              <div class="kpi-sub">国交省公開帳簿に掲載あり</div>
+            </div>
+            <div class="kpi-card kpi-card--unlisted">
+              <div class="kpi-label">未掲載・要確認</div>
+              <div id="kpi-unlisted" class="kpi-value">0</div>
+              <div class="kpi-sub">R5.5以降の新規認定または誤記確認</div>
+            </div>
+            <div class="kpi-card kpi-card--alert">
+              <div class="kpi-label">注意アラート</div>
+              <div id="kpi-alerts" class="kpi-value">0</div>
+              <div class="kpi-sub">形式異常・周辺記載との整合性確認</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="results-toolbar">
+              <div class="filter-pills" role="group" aria-label="結果フィルタ">
+                <button type="button" class="filter-pill is-active" data-batch-filter="all">すべて</button>
+                <button type="button" class="filter-pill" data-batch-filter="found">R5.4台帳一致</button>
+                <button type="button" class="filter-pill" data-batch-filter="unlisted">未掲載・要確認</button>
+                <button type="button" class="filter-pill" data-batch-filter="alert">注意アラートあり</button>
+              </div>
+              <div class="toolbar-right">
+                <label class="toggle-check">
+                  <input id="chk-batch-dedupe" type="checkbox" checked>
+                  <span>同一番号をまとめて表示</span>
+                </label>
+                <button id="btn-batch-csv" type="button" class="btn btn--sm">CSVダウンロード</button>
+                <button id="btn-batch-md" type="button" class="btn btn--sm btn--primary">Markdownレポートをコピー</button>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th style="width: 120px;">照合状態</th>
+                    <th style="width: 155px;">認定番号</th>
+                    <th style="width: 195px;">記号デコード結果</th>
+                    <th>R5.4帳簿情報 / 公式確認</th>
+                    <th style="width: 240px;">注意アラート・整合性ヒント</th>
+                    <th style="width: 190px;">出現箇所</th>
+                  </tr>
+                </thead>
+                <tbody id="batch-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Detail Modal -->
+  <div id="detail-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-cert-title">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h2 id="modal-cert-title" class="modal-cert-no"></h2>
+          <span id="modal-period-badge" class="badge badge--indigo"></span>
+          <span id="modal-category-badge" class="badge badge--neutral"></span>
+        </div>
+        <button id="btn-modal-close" type="button" class="icon-btn" aria-label="閉じる">✕</button>
+      </div>
+      <div id="modal-body" class="modal-body"></div>
+      <div class="modal-footer">
+        <div class="scope-actions">
+          <button id="btn-modal-copy" type="button" class="btn btn--sm">認定番号をコピー</button>
+          <button id="btn-modal-to-decoder" type="button" class="btn btn--sm">デコーダで開く</button>
+        </div>
+        <a id="btn-modal-seinokyo" class="btn btn--sm btn--primary" href="https://www.seinokyo.jp/ninteidb/pub/" target="_blank" rel="noopener noreferrer">
+          建築性能基準推進協会（性能協DB）で検索 ↗
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <h3 class="footer-heading">出典・ライセンス表示（PDL1.0準拠）</h3>
+        <p class="footer-text">
+          出典：「<a href="https://www.mlit.go.jp/jutakukentiku/build/jutakukentiku_house_tk_000165.html" target="_blank" rel="noopener noreferrer">建築基準法に基づく構造方法等の認定に係る帳簿等</a>」（国土交通省）を加工して作成（データ基準日：令和5年4月30日）。
+          本サイトおよび収録データは国土交通省その他の公的機関が作成・監修したものではなく、<strong>非公式のオープンデータプロジェクト</strong>です。
+        </p>
+        <p class="footer-text" style="margin-bottom: 0;">
+          ソースコード：MIT License（<a href="https://github.com/ssKudo/daijin-nintei-db" target="_blank" rel="noopener noreferrer">ssKudo/daijin-nintei-db</a>） ／
+          加工データ：公共データ利用規約（第1.0版）（PDL1.0）に準拠
+        </p>
+      </div>
+      <div class="footer-disclaimer">
+        <h3 class="footer-heading">重要な制約と免責事項</h3>
+        <p class="footer-text" style="margin-bottom: 0;">
+          本ツールの収録帳簿は<strong>令和5年4月30日時点</strong>の公開PDFに基づくため、令和5年5月以降の新規認定・変更・取消は含まれません。また、各認定の別添（詳細な仕様・構成・施工条件）は収録していません。建築確認申請や法適合判断にあたっては、必ず有資格者が<a href="https://www.seinokyo.jp/ninteidb/pub/" target="_blank" rel="noopener noreferrer">一般社団法人 建築性能基準推進協会（性能協）大臣認定等検索システム</a>および認定書原本（別添含む）で最新情報を確認してください。
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <script defer src="./decoder.js"></script>
+  <script defer src="./app.js"></script>
+</body>
+</html>

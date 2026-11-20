@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "daijin-nintei-db"
+version = "0.1.0"
+description = "Zero-hallucination decoder, local search engine, and batch screener for Japanese MLIT Minister Certification numbers (大臣認定番号)"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "ssKudo"},
+]
+keywords = ["architecture", "building-standards-act", "mlit", "japan", "daijin-nintei"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+# Core library and CLI use Python standard library only (zero external runtime dependencies)
+dependencies = []
+
+[project.optional-dependencies]
+pdf = ["pymupdf>=1.24.0"]
+dxf = ["ezdxf>=1.1.0"]
+ifc = ["ifcopenshell>=0.7.0"]
+pipeline = ["pymupdf>=1.24.0", "pdfplumber>=0.11.0", "requests>=2.31.0"]
+all = [
+    "pymupdf>=1.24.0",
+    "ezdxf>=1.1.0",
+    "ifcopenshell>=0.7.0",
+]
+dev = [
+    "pytest>=8.0.0",
+]
+
+[project.scripts]
+daijin-nintei = "daijin_nintei.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["daijin_nintei*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-q"
