@@ -280,17 +280,19 @@
     };
   }
 
+  function toHalfwidthAscii(text) {
+    return text.replace(/[\uFF01-\uFF5E]/g, (ch) =>
+      String.fromCharCode(ch.charCodeAt(0) - 0xFEE0)
+    );
+  }
+
   /**
    * Normalize fullwidth ASCII, Japanese hyphens/dashes, spaces, and case.
    * Example: "ＦＰ０６０ＢＥ－０１２３" -> "FP060BE-0123"
    */
   function normalizeCertNo(raw) {
     if (raw == null) return '';
-    let s = String(raw).trim();
-    // Fullwidth alphanumeric & ASCII punctuation (U+FF01..U+FF5E -> U+0021..U+007E)
-    s = s.replace(/[\uFF01-\uFF5E]/g, function (ch) {
-      return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0);
-    });
+    let s = toHalfwidthAscii(String(raw).trim());
     // Fullwidth space to halfwidth
     s = s.replace(/\u3000/g, ' ');
     // Normalize all hyphen/dash/prolonged-sound variants
@@ -490,28 +492,20 @@
       };
     }
 
-    // Split by hyphen: PREFIX-SERIAL(-BRANCH)? with optional parenthesized sub-number e.g. FP030RF-2027(2) or FP060FL-0093-2(1)
-    const parts = normalized.split('-');
-    const prefix = parts[0] || '';
-    let serial = parts.length >= 2 ? parts[1] : '';
-    let branch = parts.length >= 3 ? parts.slice(2).join('-') : null;
-
-    // Separate parenthesized sub-number attached directly to serial, e.g. "2027(2)" -> serial="2027", branch="(2)"
-    if (serial) {
-      const parenMatch = serial.match(/^([0-9]+[A-Z]?)(\([0-9A-Z]+\))$/);
-      if (parenMatch) {
-        serial = parenMatch[1];
-        branch = branch ? (parenMatch[2] + '-' + branch) : parenMatch[2];
-      }
-    }
-
+    // Keep the whole serial for validation, including up to two numeric branches.
+    const separator = normalized.indexOf('-');
+    const prefix = separator < 0 ? normalized : normalized.slice(0, separator);
+    const fullSerial = separator < 0 ? '' : normalized.slice(separator + 1);
+    const serialMatch = fullSerial.match(/^(\d{1,6}[A-Z]?)((?:-\d{1,3}){0,2}(?:\([0-9A-Z]{1,4}\))?)$/);
+    const serial = serialMatch ? serialMatch[1] : fullSerial;
+    const branch = (serialMatch && serialMatch[2].replace(/^-/, '')) || null;
     const isShortSerialAllowed = /^(LAE|VEC|DW\d[A-Z0-9]*)$/.test(prefix);
-    const serialRe = isShortSerialAllowed ? /^\d{1,6}[A-Z]?$/ : /^\d{3,6}[A-Z]?$/;
+    const hasValidSerial = Boolean(serialMatch && (isShortSerialAllowed || /^\d{3}/.test(serial)));
 
-    if (parts.length < 2 || !serial) {
+    if (!fullSerial) {
       warnings.push('ハイフン区切りの通算番号（例：-0001）が不足しています。記号部分のみを参考解析します。');
-    } else if (!serialRe.test(serial)) {
-      warnings.push('通算番号「' + serial + '」が標準的な数字形式（通常4桁または5桁）と異なります。');
+    } else if (!hasValidSerial) {
+      warnings.push('通算番号・枝番「' + fullSerial + '」が標準的な形式と異なります。');
     }
 
     const base = {
@@ -536,8 +530,6 @@
       is_valid_format: false,
       warnings: warnings
     };
-
-    const hasValidSerial = Boolean(serial && serialRe.test(serial));
 
     // 1A. Compound fire/penetration pattern: e.g. FP060BE, QF045BE, QF075CN, PC030RS, QP020BE, PS060WL, NH030FL, FI020RF, FPLH060BE, QPEP020BE
     const compoundMatch = prefix.match(/^([A-Z]{2,4})(\d{3})([A-Z]{2,3})$/);
@@ -852,35 +844,34 @@
     const exactList = Object.keys(state.exactCodes).concat(Array.from(state.knownLedgerPrefixes));
     const exactSet = new Set(exactList);
 
-    // Match candidate token: ASCII/fullwidth letters+digits prefix (up to 12 chars for FPLH120BE / QPEP020BE),
-    // hyphen variant, 2-6 digits (+ optional -branch / (sub))
-    // Negative lookbehind/lookahead avoided for max browser compatibility; use boundary verification.
-    const candidateRe = /([A-Za-zＡ-Ｚａ-ｚ][A-Za-z0-9Ａ-Ｚａ-ｚ０-９]{1,11})\s*[‐‑‒–—―−ー－﹣-]\s*([0-9０-９]{2,6}(?:[‐‑‒–—―−ー－﹣-][0-9０-９]{1,3})?(?:[(（][0-9０-９]{1,3}[)）])?)/g;
+    // Consume the entire suffix so a malformed branch cannot match a shorter ledger number.
+    // Validate branch counts, lengths and characters in decodeCertNo.
+    const candidateRe = /[A-Za-z][A-Za-z0-9]{1,11}\s*[‐‑‒–—―−ー﹣-]\s*(\d{1,6})[A-Za-z]?(?:[‐‑‒–—―−ー﹣-][A-Za-z0-9]+)*(?:\([A-Za-z0-9]+\))?/g;
+    const continuationRe = /[A-Za-z0-9_‐‑‒–—―−ー﹣-]/;
 
     const results = [];
     lines.forEach(function (rawLine, idx) {
       const lineNo = idx + 1;
+      // ASCII width conversion preserves offsets into the original line.
+      const line = toHalfwidthAscii(rawLine);
       let match;
       const lineMatches = [];
       candidateRe.lastIndex = 0;
-      while ((match = candidateRe.exec(rawLine)) !== null) {
+      while ((match = candidateRe.exec(line)) !== null) {
         const startIdx = match.index;
         const endIdx = startIdx + match[0].length;
-        // Boundary check: ensure not glued inside an alphanumeric identifier/URL path like "abcFP060BE-0001"
-        const prevCh = startIdx > 0 ? rawLine[startIdx - 1] : '';
-        const nextCh = endIdx < rawLine.length ? rawLine[endIdx] : '';
-        if (/[A-Za-z0-9_]/.test(prevCh) || /[A-Za-z0-9_]/.test(nextCh)) {
+        const prevCh = startIdx > 0 ? line[startIdx - 1] : '';
+        const nextCh = endIdx < line.length ? line[endIdx] : '';
+        if (/[A-Za-z0-9_]/.test(prevCh) || continuationRe.test(nextCh)) {
           continue;
         }
 
-        const rawToken = match[0];
+        const rawToken = rawLine.slice(startIdx, endIdx);
         const norm = normalizeCertNo(rawToken);
-        const normParts = norm.split('-');
-        const prefix = normParts[0];
-        const rawSerialDigits = (normParts[1] || '').replace(/\(.+\)$/, '');
+        const prefix = norm.split('-', 1)[0];
 
         // Only allow 2-digit serials for equipment prefixes that genuinely use them (LAE, VEC, DW*)
-        if (rawSerialDigits.length < 3 && !/^(LAE|VEC|DW\d[A-Z0-9]*)$/.test(prefix)) {
+        if (match[1].length < 3 && !/^(LAE|VEC|DW\d[A-Z0-9]*)$/.test(prefix)) {
           continue;
         }
 
@@ -959,17 +950,13 @@
     // 1. Fire-resistance duration mismatch check
     if (typeof decoded.duration_min === 'number' &&
         ['FP', 'QF', 'PC', 'QP', 'PS', 'FPLH', 'QPEP', 'EH', 'EQ'].indexOf(decoded.structure_code) !== -1) {
+      const durationText = toHalfwidthAscii(text);
       const mentionedMinutes = new Set();
-      // Match patterns like "60分", "45分間", "120分", "30分"
-      const minMatches = text.matchAll(/(?:^|[^\d])(20|30|45|60|75|90|120|180|240)\s*分/g);
-      for (const m of minMatches) {
+      for (const m of durationText.matchAll(/(?:^|[^\d.])(20|30|45|60|75|90|120|180|240)\s*分/g)) {
         mentionedMinutes.add(parseInt(m[1], 10));
       }
-      // Match patterns like "1時間", "2時間", "3時間", "１時間"
-      const hrMatches = text.matchAll(/([123１２３])\s*時間/g);
-      for (const m of hrMatches) {
-        const d = m[1].replace(/[１２３]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0xFEE0); });
-        mentionedMinutes.add(parseInt(d, 10) * 60);
+      for (const m of durationText.matchAll(/(?:^|[^\d.])([123])\s*時間/g)) {
+        mentionedMinutes.add(parseInt(m[1], 10) * 60);
       }
 
       if (mentionedMinutes.size > 0 && !mentionedMinutes.has(decoded.duration_min)) {
