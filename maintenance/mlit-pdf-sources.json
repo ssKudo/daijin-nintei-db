@@ -1,0 +1,190 @@
+{
+  "amusement_facilities/H25_after": {
+    "url": "https://www.mlit.go.jp/jutakukentiku/build/content/160_yuugishisetsu.pdf",
+    "sha256": "bd55eb384394bdcd08c4e72daebac0956a8bf53ade3cdf9e891a181a35f26da4"
+  },
+  "amusement_facilities/H25_before": {
+    "url": "https://www.mlit.go.jp/common/001081176.pdf",
+    "sha256": "355e86b5854eb4c000ef9533c93cadfbcfc04b0c4f26d4b655f9f933c2154ec5"
+  },
+  "building_equipment/H25_after": {
+    "url": "https://www.mlit.go.jp/jutakukentiku/build/content/120_kenchikusetsubi.pdf",
+    "sha256": "9875f72579a793461152268670acbfb6e7c5337af414fd708f98476099f9dc36"
+  },
+  "building_equipment/H25_before": {
+    "url": "https://www.mlit.go.jp/common/001081174.pdf",
+    "sha256": "ed0c6989bd28cc63e761417aa69efe1f6f3a85fa9a234fffe74c314914d9d70e"
+  },
+  "buildings/H25_after": {
+    "url": "https://www.mlit.go.jp/jutakukentiku/build/content/010_kenchikubutsu.pdf",
+    "sha256": "b6180152b2be0ac806848a6d7f683392344518ab56dc10754e64113844ed7558"
+  },
+  "buildings/H25_before": {
+    "url": "https://www.mlit.go.jp/common/001081162.pdf",
+    "sha256": "cf20db3fb455b4b90a62d24230bc8d946e1803a9493231232fd8d3598710a97c"
+  },
+  "designated_materials_1/H25_after": {
+    "url": "https://www.mlit.go.jp/jutakukentiku/build/content/051_shiteikenchikuzairyou.pdf",
+    "sha256": "9a90761a43569d6a7a13e1224ef9e8e4023a97c1574e2b99aa23cf456fb5bd2b"
+  },
+  "designated_materials_1/H25_before": {
+    "url": "https://www.mlit.go.jp/common/001109042.pdf",
+    "sha256": "01b9a751bd64b1b0d62d926578c067eda03e243b1c5ae94baf6d233246609464"
+  },
+  "designated_materials_2/H25_after": {
+    "url": "https://www.mlit.go.jp/jutakukentiku/build/content/052_shiteikenchikuzairyou.pdf",
+    "sha256": "648d60a620ee657043d19ceaa3390b745d7e9cba7af2ea6050501ddcb7d62f87"
+  },
+  "designated_materials_2/H25_before": {
+    "url": "https://www.mlit.go.jp/common/001109043.pdf",
+    "sha256": "ea1083d18f86f48ed677d8fc7cc629449eaaff123cc3ae6579a98a920d1068ae"
+  },
+  "doc_omission/H25_after": {
+    "url": "https://www.mlit.go.jp/jutakukentiku/build/content/070_toshoshouryaku.pdf",
+    "sha256": "017eac4ac86c0ece2755269f3a49b80553a019cc25057cabde9afd2acab30bba"
+  },
+  "doc_omission/H25_before": {
+    "url": "https://www.mlit.go.jp/common/001109045.pdf",
+    "sha256": "2f0529d00a204abb10f3b544d505089793ad4843f93974e3728c5227ae872cb6"
+  },
+  "elevators/H25_after": {
+    "url": "https://www.mlit.go.jp/jutakukentiku/build/content/150_shoukouki.pdf",
+    "sha256": "5f9e33e120b1276fe7bfe888e7e5b91e64e890ed9764ba115c71a73c4513cba5"
+  },
+  "elevators/H25_before": {
+    "url": "https://www.mlit.go.jp/common/001081175.pdf",
+    "sha256": "168d7f6d7cc79fee16a47ccb2ab0e1126b22e6c2161bbd79b6bebbbcada5b247"
+  },
+  "fire_brand/H25_after": {
+    "url": "https://www.mlit.go.jp/jutakukentiku/build/content/024_tobihi.pdf",
+    "sha256": "922fb77130c05e0c5f3bbc14ddc80e6e43ca9b7daf513ce55d82fdb5143d0336"
+  },
+  "fire_brand/H25_before": {
+    "url": "https://www.mlit.go.jp/common/001090988.pdf",
+    "sha256": "098da5872be1e47429a0f99a1deb88fd459e72c74fb11ec0f473cacce82f16c2"
+  },
+  "fire_doors/H25_after": {
+    "url": "https://www.mlit.go.jp/jutakukentiku/build/content/040_boukasetsubi.pdf",
+    "sha256": "bcfe0184860ab29b3a21d69785ebe0fc2f58a62c3b5ea3d234fce5370c196075"
+  },
+  "fire_doors/H25_before": {
+    "url": "https://www.mlit.go.jp/common/001081170.pdf",
+    "sha256": "66aa2d1d8398413c2fcc12d6aae72febe7ddcd9ebef6ec087fb524bc5b190202"
+  },
+  "fire_materials/H25_after": {
+    "url": "https://www.mlit.go.jp/jutakukentiku/build/content/030_boukazairyou.pdf",
+    "sha256": "74117a0a8604472db8f852da2261c5b1ae121bac4a72fe425225a8b06040c5f6"
+  },
+  "fire_materials/H25_before": {
+    "url": "https://www.mlit.go.jp/common/001081169.pdf",
+    "sha256": "9e9ab4f444294f232126cfdda417b8a0854af92943eb6afe0f1115dbcbc4083f"
+  },
+  "fire_other/H25_after": {
+    "url": "https://www.mlit.go.jp/jutakukentiku/build/content/025_sonotakouzou.pdf",
+    "sha256": "59749b2f07de259f280a112c8beedf963e240d772e2cbd99f99b15b9452a42f7"
+  },
+  "fire_other/H25_before": {
+    "url": "https://www.mlit.go.jp/common/001081168.pdf",
+    "sha256": "518e7b156431f422251e296792b04c59ef8f257aafb10fddf840b8263a13de8e"
+  },
+  "fire_resistive/H25_after": {
+    "url": "https://www.mlit.go.jp/jutakukentiku/build/content/023_boukajyunbouka.pdf",
+    "sha256": "9b47f8ea5087fa0668ce3afdaa588778040d8b003d73faac744c527174b137b5"
+  },
+  "fire_resistive/H25_before": {
+    "url": "https://www.mlit.go.jp/common/001081166.pdf",
+    "sha256": "1f457ea8f5ab5427411e3b5f13ee135facbc56cdf0b58e68bf5d0c2656265cc4"
+  },
+  "fireproof/H25_after": {
+    "url": "https://www.mlit.go.jp/jutakukentiku/build/content/021_taikakouzou.pdf",
+    "sha256": "66462af62d8dd2cff6be2b4aa5c1cadeb55fbcc046b9bddc536afe6ab91b26a0"
+  },
+  "fireproof/H25_before": {
+    "url": "https://www.mlit.go.jp/common/001081164.pdf",
+    "sha256": "c1d8ec3a7875936b2d3bab691d3db360c043c7a4d9b7412b84215d65518b3ff5"
+  },
+  "penetration/H25_after": {
+    "url": "https://www.mlit.go.jp/jutakukentiku/build/content/130_kukaku.pdf",
+    "sha256": "50b6353497851bda7191020ff214fda0641db2709f072290fcc01dfe72e20428"
+  },
+  "penetration/H25_before": {
+    "url": "https://www.mlit.go.jp/common/001081171.pdf",
+    "sha256": "3a79f9c92e7b3e7996aed8c35284a5fd72dc9b35453cd3653fc36fb91aa42bd8"
+  },
+  "quasi_fireproof/H25_after": {
+    "url": "https://www.mlit.go.jp/jutakukentiku/build/content/022_jyuntaikakouzou.pdf",
+    "sha256": "e8a96e4814cf869b6d93db25fe59e29eeab27cd86b87c25a180fead389520f2b"
+  },
+  "quasi_fireproof/H25_before": {
+    "url": "https://www.mlit.go.jp/common/001081165.pdf",
+    "sha256": "ca6f7b3a5b19fac1f89e16dc8925083c291d1efb318bb918e5111cc8ac4723f4"
+  },
+  "reference/ref_buildings": {
+    "url": "https://www.mlit.go.jp/common/001069848.pdf",
+    "sha256": "6ab27a7347cf76b52211d19c86a2fa90eb44bdad14475df1f2903997849847fb"
+  },
+  "reference/ref_elevators": {
+    "url": "https://www.mlit.go.jp/common/001069849.pdf",
+    "sha256": "53511fb90bbbeb6c352c5f7bc3a41c5264bf696a9bef6fb8e2c331eec5f98485"
+  },
+  "reference/ref_english_codes": {
+    "url": "https://www.mlit.go.jp/jutakukentiku/build/content/001709467.pdf",
+    "sha256": "bc17368d6fb7a4a88d1a52546c9462a7b8bd2a3ba4409b8d572eef98c8435ddd"
+  },
+  "reference/ref_fire_materials": {
+    "url": "https://www.mlit.go.jp/common/001069853.pdf",
+    "sha256": "88cb9891be06afbd3a1a85c14ca0b983f16157ed2e0b652e6aa1ca0d678ee15e"
+  },
+  "reference/ref_variations": {
+    "url": "https://www.mlit.go.jp/common/001069850.pdf",
+    "sha256": "486ae780a6b63d9fa82ffd70615d60d98d44e1dee3133bad103113a7066111bf"
+  },
+  "sick_house/H25_after": {
+    "url": "https://www.mlit.go.jp/jutakukentiku/build/content/100_sickhouse.pdf",
+    "sha256": "d9b8009a22f37b30fabf850cf833afb686b296e8462dc06814e8aac1d2163a56"
+  },
+  "sick_house/H25_before": {
+    "url": "https://www.mlit.go.jp/common/001081173.pdf",
+    "sha256": "12783d48e636727cfaa9f480e51e23f2bf528b2e4a2352151926df8d9ae7463d"
+  },
+  "sound_insulation/H25_after": {
+    "url": "https://www.mlit.go.jp/jutakukentiku/build/content/090_shaonkouzou.pdf",
+    "sha256": "1bc7f3a66554777aa32bc292b2acf1cfb50b03e26b135284f327f52253264098"
+  },
+  "sound_insulation/H25_before": {
+    "url": "https://www.mlit.go.jp/common/001081172.pdf",
+    "sha256": "40526c7b1dab1679decfd633b9265d5172ba97d50eeccf6df208961b5cb73adb"
+  },
+  "steel_factories/H25_after": {
+    "url": "https://www.mlit.go.jp/jutakukentiku/build/content/210_tekkotsusei.pdf",
+    "sha256": "6d18ed489ecfec9e1c98b98a2d168d7384de330f34d768879a43ec14aac97795"
+  },
+  "steel_factories/H25_before": {
+    "url": "https://www.mlit.go.jp/common/001404108.pdf",
+    "sha256": "0bbfae193dd2824ad470996cca21310a2ec7765c6785beb8c1cac4f8c2327c3d"
+  },
+  "steel_joints/H25_after": {
+    "url": "https://www.mlit.go.jp/jutakukentiku/build/content/080_setsugoubu.pdf",
+    "sha256": "59ea096b6f9509f4a39a2a7749eafd78eeda2db690e1d6e11794df433ba316b2"
+  },
+  "steel_joints/H25_before": {
+    "url": "https://www.mlit.go.jp/common/001109046.pdf",
+    "sha256": "84e405f7f5f7687925dd566b8289e4f7ae5af36bc02f1d65a68b28cae7b8f60c"
+  },
+  "structures/H25_after": {
+    "url": "https://www.mlit.go.jp/jutakukentiku/build/content/200_kousakubutu.pdf",
+    "sha256": "942b04afd05b3ea79e8eb74f7ee6312b189e6f137792ffc6e4e3413ffce12d44"
+  },
+  "structures/H25_before": {
+    "url": "https://www.mlit.go.jp/common/001081163.pdf",
+    "sha256": "370eb49edf026be3864cb52fd20b78504087345a47e101bce65ac320becbbd93"
+  },
+  "wall_multiplier/H25_after": {
+    "url": "https://www.mlit.go.jp/jutakukentiku/build/content/060_kabebairitu.pdf",
+    "sha256": "298dd454960fcaf533c9e40060bec5299fa50c118f93e3785e13e18f685439db"
+  },
+  "wall_multiplier/H25_before": {
+    "url": "https://www.mlit.go.jp/common/001109044.pdf",
+    "sha256": "dec7cd71f9c58c86663001416bd6d71e372d69549c54ab12c4281870c7000a03"
+  }
+}

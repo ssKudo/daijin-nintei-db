@@ -144,6 +144,10 @@ python scripts/build_code_rules.py
 python scripts/parse_pdfs.py
 ```
 
+### 6. 国交省PDFの週次確認
+
+GitHub Actions の「Check and refresh MLIT ledgers」は毎週月曜の日本時間6:17に、帳簿と参考資料のPDFを内容のハッシュで照合します。差し替えがあればデータを再生成・検証し、GitHub Pagesの公開版も更新を要求します。差し替えがなければ、確認日時と収録末日を [確認履歴](./maintenance/ledger-checks.md) に追記します。Actions画面から手動でも起動できます。
+
 ---
 
 ## 収録データ構成（全21カテゴリ）
