@@ -109,12 +109,37 @@ class TestCliInProcess:
         assert out_csv.read_bytes().startswith(b"\xef\xbb\xbf")
 
     def test_decode_multiple_and_no_db(self, capsys) -> None:
-        rc = main(["decode", "FP060BE-9999", "NM-8585", "--no-db", "--json"])
+        rc = main(["decode", "SOI-0249", "FP060BE-9999", "FP060XX-0001", "--no-db", "--json"])
         assert rc == 0
         items = json.loads(capsys.readouterr().out)
-        assert isinstance(items, list) and len(items) == 2
-        assert items[0]["decode"]["cert_no"] == "FP060BE-9999"
-        assert items[1]["decode"]["cert_no"] == "NM-8585"
+        assert isinstance(items, list) and len(items) == 3
+        assert items[0]["decode"]["cert_no"] == "SOI-0249"
+        assert items[0]["status"] == "UNCHECKED"
+        assert items[1]["decode"]["cert_no"] == "FP060BE-9999"
+        assert items[1]["status"] == "UNCHECKED"
+        assert items[2]["decode"]["cert_no"] == "FP060XX-0001"
+        assert items[2]["status"] == "INVALID_FORMAT"
+
+    def test_decode_single_no_db_json_returns_unchecked(self, capsys) -> None:
+        rc = main(["decode", "SOI-0249", "--no-db", "--json"])
+        assert rc == 0
+        payload = json.loads(capsys.readouterr().out)
+        assert payload["status"] == "UNCHECKED"
+        assert "未照合" in payload["status_label"]
+        assert payload["ledger_record"] is None
+
+    def test_screen_no_db_returns_unchecked_never_unlisted(
+        self, monkeypatch, capsys
+    ) -> None:
+        import io
+
+        monkeypatch.setattr(sys, "stdin", io.StringIO("遮音界壁 SOI-0249\n"))
+        rc = main(["screen", "-", "--no-db", "--format", "json"])
+        assert rc == 0
+        payload = json.loads(capsys.readouterr().out)
+        assert payload["summary"]["unchecked_count"] == 1
+        assert payload["summary"]["unlisted_valid_count"] == 0
+        assert payload["occurrences"][0]["status"] == "UNCHECKED"
 
     def test_screen_missing_path_returns_nonzero(self, mock_data_dir: Path, capsys) -> None:
         rc = main(["screen", "/nonexistent/path/abc.txt", "--data-dir", str(mock_data_dir)])

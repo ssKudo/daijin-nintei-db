@@ -7,13 +7,31 @@ using pure Python standard library modules.
 from __future__ import annotations
 
 import json
+import os
 import unicodedata
 from pathlib import Path
 from typing import Any
 
-from .decoder import normalize_cert_no
+from .decoder import DATA_DIR_ENV_VAR, normalize_cert_no
 
+REPO_URL = "https://github.com/ssKudo/daijin-nintei-db"
 _DEFAULT_DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+
+
+def resolve_data_dir(data_dir: Path | str | None = None) -> Path:
+    """Resolve the MLIT ledger ``data/`` directory.
+
+    Precedence:
+    1. Explicit ``data_dir`` argument
+    2. Environment variable ``DAIJIN_NINTEI_DATA_DIR``
+    3. Repository-local ``<repo>/data`` directory
+    """
+    if data_dir is not None:
+        return Path(data_dir)
+    env_dir = os.environ.get(DATA_DIR_ENV_VAR, "").strip()
+    if env_dir:
+        return Path(env_dir)
+    return _DEFAULT_DATA_DIR
 
 
 def _normalize_search_text(text: str) -> str:
@@ -25,11 +43,15 @@ class CertDatabase:
     """Indexed, lazy-loading interface over the local MLIT certification dataset."""
 
     def __init__(self, data_dir: Path | str | None = None) -> None:
-        self.data_dir = Path(data_dir) if data_dir is not None else _DEFAULT_DATA_DIR
+        self.data_dir = resolve_data_dir(data_dir)
         self.manifest_path = self.data_dir / "manifest.json"
         if not self.manifest_path.is_file():
             raise FileNotFoundError(
-                f"manifest.json が見つかりません: {self.manifest_path}"
+                f"公開台帳データ（manifest.json）が見つかりません: {self.manifest_path}\n"
+                f"wheel単体インストールには全区分台帳データ（data/）は同梱されていません。\n"
+                f"台帳検索・照合を利用するには {REPO_URL} から data/ を取得し、"
+                f"--data-dir <dataディレクトリ> または環境変数 {DATA_DIR_ENV_VAR} で指定してください。\n"
+                "（※ 記号デコードのみであれば `daijin-nintei decode` / `screen --no-db` を単体で利用できます）"
             )
         self._manifest: dict[str, Any] = json.loads(
             self.manifest_path.read_text(encoding="utf-8")
@@ -70,7 +92,16 @@ class CertDatabase:
     def data_period(self) -> str:
         return str(
             self._manifest.get(
-                "data_period", "令和5年4月30日現在（国土交通省公開帳簿）"
+                "data_period", "国土交通省公開帳簿（期間情報未記載）"
+            )
+        )
+
+    @property
+    def source_url(self) -> str:
+        return str(
+            self._manifest.get(
+                "source_url",
+                "https://www.mlit.go.jp/jutakukentiku/build/jutakukentiku_house_tk_000042.html",
             )
         )
 

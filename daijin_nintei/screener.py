@@ -2,11 +2,13 @@
 for Japanese Minister Certification numbers (大臣認定番号).
 
 Zero-hallucination design:
-- Distinguishes clearly between ``FOUND`` (present in R5.4.30 MLIT ledger),
-  ``UNLISTED_VALID_FORMAT`` (valid official MLIT symbol format, not in R5.4.30
-  ledger — e.g. post-May 2023 certification or typo requiring verification via
-  seinokyo), and ``INVALID_FORMAT`` (malformed or unrecognized symbol).
-- Never falsely condemns valid-format unlisted numbers as invalid/fraudulent.
+- Distinguishes clearly between ``FOUND`` (present in loaded MLIT public ledger),
+  ``UNLISTED_VALID_FORMAT`` (valid official MLIT symbol format, not in the loaded
+  ledger — e.g. certification issued after the ledger cutoff or typo requiring
+  verification via seinokyo), ``UNCHECKED`` (valid official symbol format, but
+  ledger lookup was skipped via ``--no-db`` or unavailable), and
+  ``INVALID_FORMAT`` (malformed or unrecognized symbol).
+- Never falsely labels unchecked or valid-format unlisted numbers as invalid.
 - Core functionality uses only Python stdlib; ``.pdf`` (``pymupdf``), ``.dxf``
   (``ezdxf``), and ``.ifc`` (``ifcopenshell``) are optional integrations.
 """
@@ -38,25 +40,39 @@ from .decoder import (
 # Status constants
 STATUS_FOUND = "FOUND"
 STATUS_UNLISTED_VALID_FORMAT = "UNLISTED_VALID_FORMAT"
+STATUS_UNCHECKED = "UNCHECKED"
 STATUS_INVALID_FORMAT = "INVALID_FORMAT"
 
 STATUS_LABELS: dict[str, str] = {
-    STATUS_FOUND: "R5.4台帳一致",
+    STATUS_FOUND: "公開台帳一致",
     STATUS_UNLISTED_VALID_FORMAT: (
-        "R5.4帳簿未掲載（令和5年5月以降の新規認定、または誤記の要確認）"
+        "公開帳簿未掲載（基準日以降の新規認定、または誤記の要確認）"
     ),
+    STATUS_UNCHECKED: "台帳未照合（--no-db指定または台帳未読込）",
     STATUS_INVALID_FORMAT: "形式不正・要確認",
 }
 
-LEGAL_DISCLAIMER = (
-    "【免責事項・利用上の注意】\n"
-    "本レポートは国土交通省公開「建築基準法に基づく構造方法等の認定に係る帳簿等」"
-    "（令和5年4月30日現在・公共データ利用規約（第1.0版）（PDL1.0）に基づき加工）"
-    "を用いた機械的スクリーニング補助結果です。"
-    "令和5年5月以降の新規認定・変更・取消・承継や別添仕様の詳細条件は含まれていません。\n"
-    "未掲載の認定番号や最終的な建築基準法上の適法性判断については、必ず有資格者（建築士等）が"
-    f"建築性能基準推進協会 大臣認定検索システム（{SEINOKYO_SEARCH_URL}）および認定書・別添原本にてご確認ください。"
-)
+
+def build_legal_disclaimer(data_period: str | None = None) -> str:
+    """Build legal disclaimer text referencing the loaded ledger ``data_period``."""
+    period_note = (
+        f"（収録期間：{data_period}・公共データ利用規約（第1.0版）（PDL1.0）に基づき加工）"
+        if data_period and "未読込" not in data_period
+        else "（公共データ利用規約（第1.0版）（PDL1.0）に基づき加工）"
+    )
+    return (
+        "【免責事項・利用上の注意】\n"
+        "本レポートは国土交通省公開「建築基準法に基づく構造方法等の認定に係る帳簿等」"
+        f"{period_note}"
+        "を用いた機械的スクリーニング補助結果です。"
+        "帳簿収録基準日以降の新規認定・変更・取消・承継や別添仕様の詳細条件は含まれていません。\n"
+        "未掲載・未照合の認定番号や最終的な建築基準法上の適法性判断については、必ず有資格者（建築士等）が"
+        f"一般社団法人 建築性能基準推進協会 大臣認定検索システム（{SEINOKYO_SEARCH_URL}）"
+        "および認定書・別添原本にてご確認ください。"
+    )
+
+
+LEGAL_DISCLAIMER = build_legal_disclaimer()
 
 # Supported file extensions when scanning directories
 TEXT_EXTENSIONS: frozenset[str] = frozenset(
@@ -356,11 +372,16 @@ class ScreeningReport:
         lines.append("| --- | ---: |")
         lines.append(f"| 検出総数（延べ） | {s['total_occurrences']} |")
         lines.append(f"| ユニーク認定番号数 | {s['unique_cert_count']} |")
-        lines.append(f"| R5.4台帳一致 (`FOUND`) | {s['found_count']}（ユニーク {s['unique_found_count']}） |")
+        lines.append(f"| 公開台帳一致 (`FOUND`) | {s['found_count']}（ユニーク {s['unique_found_count']}） |")
         lines.append(
-            f"| R5.4帳簿未掲載・有効形式 (`UNLISTED_VALID_FORMAT`) | "
+            f"| 公開帳簿未掲載・有効形式 (`UNLISTED_VALID_FORMAT`) | "
             f"{s['unlisted_valid_count']}（ユニーク {s['unique_unlisted_valid_count']}） |"
         )
+        if s.get("unchecked_count", 0) > 0 or "未読込" in self.data_period:
+            lines.append(
+                f"| 台帳未照合・有効形式 (`UNCHECKED`) | "
+                f"{s.get('unchecked_count', 0)}（ユニーク {s.get('unique_unchecked_count', 0)}） |"
+            )
         lines.append(
             f"| 形式不正・要確認 (`INVALID_FORMAT`) | "
             f"{s['invalid_format_count']}（ユニーク {s['unique_invalid_format_count']}） |"
@@ -397,21 +418,24 @@ class ScreeningReport:
                     ledger_info = (
                         f"[建築性能基準推進協会（性能協）DBで要確認]({item.seinokyo_url})"
                     )
+                elif item.status == STATUS_UNCHECKED:
+                    ledger_info = (
+                        f"台帳未照合（[性能協DBで確認]({item.seinokyo_url})）"
+                    )
                 else:
                     ledger_info = "-"
                 files_str = _md_escape(", ".join(item.files[:3]))
                 if len(item.files) > 3:
                     files_str += f" ほか{len(item.files) - 3}件"
                 warn_badge = f"⚠ {item.warning_count}件" if item.warning_count else "-"
-                status_short = (
-                    "R5.4台帳一致"
-                    if item.status == STATUS_FOUND
-                    else (
-                        "R5.4帳簿未掲載（有効形式）"
-                        if item.status == STATUS_UNLISTED_VALID_FORMAT
-                        else "形式不正・要確認"
-                    )
-                )
+                if item.status == STATUS_FOUND:
+                    status_short = "公開台帳一致"
+                elif item.status == STATUS_UNLISTED_VALID_FORMAT:
+                    status_short = "公開帳簿未掲載（有効形式）"
+                elif item.status == STATUS_UNCHECKED:
+                    status_short = "台帳未照合（有効形式）"
+                else:
+                    status_short = "形式不正・要確認"
                 lines.append(
                     f"| `{_md_escape(item.cert_no)}` | {status_short} | {item.count} | "
                     f"{st} | {dur} | {part} | {ledger_info} | {files_str} | {warn_badge} |"
@@ -444,15 +468,47 @@ class ScreeningReport:
             i for i in self.inventory if i.status == STATUS_UNLISTED_VALID_FORMAT
         ]
         if unlisted_items:
-            lines.append("## 4. R5.4帳簿未掲載（有効形式）の確認ガイド")
+            lines.append("## 4. 公開帳簿未掲載（有効形式）の確認ガイド")
             lines.append("")
             lines.append(
-                "以下の認定番号は国土交通省の記号ルールに適合していますが、令和5年4月30日時点の公開帳簿には掲載されていません。"
-                "令和5年5月以降の新規認定または転記ミスの可能性があるため、"
+                f"以下の認定番号は国土交通省の記号ルールに適合していますが、参照した公開帳簿（{self.data_period}）には掲載されていません。"
+                "基準日以降の新規認定または転記ミスの可能性があるため、"
                 f"[一般社団法人 建築性能基準推進協会 大臣認定検索システム]({SEINOKYO_SEARCH_URL}) 等で最新状況を確認してください。"
             )
             lines.append("")
             for item in unlisted_items:
+                dec = item.decode
+                summary_parts = [
+                    str(x)
+                    for x in (
+                        dec.get("structure_type"),
+                        f"{dec['duration_min']}分" if dec.get("duration_min") else None,
+                        dec.get("part"),
+                        dec.get("law_article"),
+                    )
+                    if x
+                ]
+                lines.append(
+                    f"- `{item.cert_no}`: {' / '.join(summary_parts) or '記号デコード済'} "
+                    f"（検出: {', '.join(item.files)}）"
+                )
+            lines.append("")
+
+        # Unchecked valid-format section (when --no-db or no ledger loaded)
+        unchecked_items = [
+            i for i in self.inventory if i.status == STATUS_UNCHECKED
+        ]
+        if unchecked_items:
+            lines.append("## 4. 台帳未照合（有効形式）の案内")
+            lines.append("")
+            lines.append(
+                "以下の認定番号は国土交通省の記号ルールに適合していますが、`--no-db` 指定またはローカル台帳未読込のため、"
+                "台帳への掲載有無は照合していません（**未掲載ではありません**）。"
+                "ローカル台帳と照合する場合は `--data-dir` または環境変数 `DAIJIN_NINTEI_DATA_DIR` を指定して再実行するか、"
+                f"[一般社団法人 建築性能基準推進協会 大臣認定検索システム]({SEINOKYO_SEARCH_URL}) でご確認ください。"
+            )
+            lines.append("")
+            for item in unchecked_items:
                 dec = item.decode
                 summary_parts = [
                     str(x)
@@ -542,26 +598,28 @@ class CertScreener:
         serial_any = r"[0-9A-Z]{1,8}(?:-\d{1,3})?(?:\([0-9A-Z]{1,4}\))?"
 
         patterns: list[str] = []
-        # 1. Structured fire codes (valid & near-miss malformed, e.g. FP060XX-0001, FP60BE-0001, FP060BE-12)
+        # 1. Structured fire codes (valid & near-miss malformed, e.g. FP060XX-0001, FPLH060BE-0001, QPEP045BE-0001)
         patterns.append(rf"(?:{st_pat})\d{{1,4}}[A-Z]{{2}}\s*-\s*{serial_any}")
         # 2. Fire-compartment penetration codes (PS060WL-0123, PS60WL-0001, ...)
         patterns.append(rf"PS\d{{2,4}}[A-Z]{{2}}\s*-\s*{serial_any}")
+        # 2b. Duration-bearing fire equipment codes (EH090-0001, EH060-0003, EQ060-0001, EBN020-0001, ECN020-0001)
+        patterns.append(rf"(?:EH|EQ|EBN|ECN)\d{{3}}(?:[A-Z]{{2}})?\s*-\s*{serial_strict}")
         # 3. Unknown 2-letter prefix + 3 digits + known fire part code (catches XX060BE-0001)
         patterns.append(rf"[A-Z]{{2}}\d{{3}}(?:{pt_pat})\s*-\s*{serial_strict}")
         # 4. Short-serial building equipment prefixes (LAE-69, DW3N-99, etc.)
         patterns.append(rf"(?:LAE|DW3N)\s*-\s*{serial_short_ok}")
-        # 5. Longer known exact prefixes (SOI, SOC, EBN, ECN, CAT, CAS, FRM, TBFC, MFN, HSB, TFBJ, SPRG, ...)
+        # 5. Longer known exact prefixes (SOI, SOC, EBN, ECN, CAT, CAS, FRM, TBFC, QFRM, MCMU, MCLT, MBLK, MFN, HSB, TFBJ, SPRG, ...)
         if long_exact:
             patterns.append(rf"(?:{'|'.join(long_exact)})\s*-\s*{serial_strict}")
-        # 6. Building / structure positional bitmasks (HFEB-0001, MNNNNNN-12013-1, SNNNNNN-12379)
+        # 6. Building / structure positional bitmasks (HFEB-0001, MNNNNNN-12013-1, MNNWNNN-12104-1, SNNNNNN-12379)
         patterns.append(
-            r"[HMSN][FSN][EN][BFSN](?:[LSPN](?:[SEWN][EN])?)?\s*-\s*\d{4,5}(?:-\d{1,2})?"
+            r"[HMSN][FSN][EN][BFSWN](?:[LSPN](?:[SEWN][EN])?)?\s*-\s*\d{4,5}(?:-\d{1,2})?"
         )
         # 7. Elevator / escalator / amusement positional bitmasks (ENNNUN-2796, ESNNF-0001, ANSE-0076)
         patterns.append(
             r"(?:E[PN][CN][SN](?:[UN]{2})?|ES[PN][SN][FN]|A[PN][CSN][SEN])\s*-\s*\d{3,5}(?:-\d{1,2})?"
         )
-        # 8. Short 2-letter known exact prefixes (NM, NE, QM, QE, RM, RE, DR, DW, UR, UW, EA, EB, EC, JM, JC, CC)
+        # 8. Short 2-letter known exact prefixes (NM, NE, QM, QE, RM, RE, DR, DW, UR, UW, EA, EB, EC, ED, JM, JC, CC)
         if short_exact:
             patterns.append(rf"(?:{'|'.join(short_exact)})\s*-\s*{serial_strict}")
 
@@ -625,16 +683,28 @@ class CertScreener:
                 next_start = merged[idx + 1][0] if idx + 1 < len(merged) else len(line)
                 left_seg = line[prev_end:start]
                 right_seg = line[end:next_start]
-                # Trim right segment at first clause separator if another cert follows
+                major_sep_pat = r"[。/|｜／;；\t]"
+                minor_sep_pat = r"[、,，]"
+                # Trim right segment at first clause separator before the next cert
                 if idx + 1 < len(merged):
-                    m_sep = re.search(r"[、。/|｜;\t]", right_seg)
+                    m_sep = re.search(major_sep_pat, right_seg) or re.search(
+                        minor_sep_pat, right_seg
+                    )
                     if m_sep:
                         right_seg = right_seg[: m_sep.start()]
-                # Trim left segment after last clause separator belonging to previous cert
+                # Trim left segment after the separator separating the previous cert
                 if idx > 0:
-                    sep_matches = list(re.finditer(r"[、。/|｜;\t]", left_seg))
-                    if sep_matches:
-                        left_seg = left_seg[sep_matches[-1].end() :]
+                    major_matches = [
+                        m
+                        for m in re.finditer(major_sep_pat, left_seg)
+                        if left_seg[m.end() :].strip()
+                    ]
+                    if major_matches:
+                        left_seg = left_seg[major_matches[-1].end() :]
+                    else:
+                        m_minor = re.search(minor_sep_pat, left_seg)
+                        if m_minor:
+                            left_seg = left_seg[m_minor.end() :]
                 local_ctx = (left_seg + raw_text + right_seg).strip()
 
             results.append(
@@ -712,7 +782,16 @@ class CertScreener:
                     )
 
         # 2. Structure type mismatch (e.g., context says "耐火外壁", code is QF 準耐火)
-        if decode_result.structure_type_code in {"FP", "QF", "PC", "QP"}:
+        st_family_map = {
+            "FP": "FP",
+            "FPLH": "FP",
+            "QF": "QF",
+            "PC": "PC",
+            "QP": "QP",
+            "QPEP": "QP",
+        }
+        st_family = st_family_map.get(decode_result.structure_type_code or "")
+        if st_family:
             st_work = ctx_no_code
             for noise in (
                 "準耐火建築物",
@@ -755,7 +834,7 @@ class CertScreener:
 
             if found_st:
                 st_codes_found = {c for c, _ in found_st}
-                if decode_result.structure_type_code not in st_codes_found:
+                if st_family not in st_codes_found:
                     labels = "・".join(dict.fromkeys(lbl for _, lbl in found_st))
                     warnings.append(
                         ContradictionWarning(
@@ -918,10 +997,10 @@ class CertScreener:
                             severity="warning",
                             message=(
                                 f"文脈にはメーカー／社名「{comp_labels}」の記載がありますが、"
-                                f"R5.4台帳上の申請者は「{ledger_applicant}」です"
+                                f"公開台帳上の申請者は「{ledger_applicant}」です"
                                 "（協会認定・OEM・承継等の可能性も含め原本で確認してください）。"
                             ),
-                            basis=f"文脈={comp_labels} / R5.4台帳申請者={ledger_applicant}",
+                            basis=f"文脈={comp_labels} / 公開台帳申請者={ledger_applicant}",
                         )
                     )
 
@@ -935,10 +1014,10 @@ class CertScreener:
                         code="CERT_REVOKED_OR_EXPIRED",
                         severity="warning",
                         message=(
-                            f"R5.4台帳の認定年月日欄に取消・失効の記載があります（{date_jp}）。"
+                            f"公開台帳の認定年月日欄に取消・失効の記載があります（{date_jp}）。"
                             "当該認定の有効性・使用可否を必ず確認してください。"
                         ),
-                        basis=f"R5.4台帳認定年月日={date_jp}",
+                        basis=f"公開台帳認定年月日={date_jp}",
                     )
                 )
 
@@ -1013,13 +1092,18 @@ class CertScreener:
         ledger_rec: dict[str, Any] | None = None
         if self.db is not None:
             ledger_rec = self.db.lookup(decode_res.cert_no)
-
-        if ledger_rec is not None:
-            status = STATUS_FOUND
-        elif decode_res.is_valid_format:
-            status = STATUS_UNLISTED_VALID_FORMAT
+            if ledger_rec is not None:
+                status = STATUS_FOUND
+            elif decode_res.is_valid_format:
+                status = STATUS_UNLISTED_VALID_FORMAT
+            else:
+                status = STATUS_INVALID_FORMAT
         else:
-            status = STATUS_INVALID_FORMAT
+            status = (
+                STATUS_UNCHECKED
+                if decode_res.is_valid_format
+                else STATUS_INVALID_FORMAT
+            )
 
         contradictions = self.check_contradictions(
             cand.local_context, decode_res, ledger_rec
@@ -1051,15 +1135,16 @@ class CertScreener:
         for occ in occurrences:
             grouped.setdefault(occ.cert_no, []).append(occ)
 
+        status_order = {
+            STATUS_INVALID_FORMAT: 0,
+            STATUS_UNLISTED_VALID_FORMAT: 1,
+            STATUS_UNCHECKED: 2,
+            STATUS_FOUND: 3,
+        }
         inventory: list[InventoryItem] = []
         for cert_no, occs in sorted(
             grouped.items(),
-            key=lambda kv: (
-                0
-                if kv[1][0].status == STATUS_INVALID_FORMAT
-                else (1 if kv[1][0].status == STATUS_UNLISTED_VALID_FORMAT else 2),
-                kv[0],
-            ),
+            key=lambda kv: (status_order.get(kv[1][0].status, 9), kv[0]),
         ):
             first = occs[0]
             files = list(dict.fromkeys(o.source for o in occs))
@@ -1094,6 +1179,9 @@ class CertScreener:
             "unlisted_valid_count": sum(
                 1 for o in occurrences if o.status == STATUS_UNLISTED_VALID_FORMAT
             ),
+            "unchecked_count": sum(
+                1 for o in occurrences if o.status == STATUS_UNCHECKED
+            ),
             "invalid_format_count": sum(
                 1 for o in occurrences if o.status == STATUS_INVALID_FORMAT
             ),
@@ -1101,6 +1189,9 @@ class CertScreener:
             "unique_found_count": sum(1 for i in inventory if i.status == STATUS_FOUND),
             "unique_unlisted_valid_count": sum(
                 1 for i in inventory if i.status == STATUS_UNLISTED_VALID_FORMAT
+            ),
+            "unique_unchecked_count": sum(
+                1 for i in inventory if i.status == STATUS_UNCHECKED
             ),
             "unique_invalid_format_count": sum(
                 1 for i in inventory if i.status == STATUS_INVALID_FORMAT
@@ -1124,6 +1215,7 @@ class CertScreener:
             occurrences=occurrences,
             inventory=inventory,
             summary=summary,
+            disclaimer=build_legal_disclaimer(data_period),
         )
 
     def screen_text(self, text: str, *, source: str = "<text>") -> ScreeningReport:

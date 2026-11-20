@@ -11,11 +11,17 @@ from pathlib import Path
 from typing import Any, Sequence
 
 from .db import CertDatabase
-from .decoder import SEINOKYO_SEARCH_URL, CertDecoder, format_load_bearing_label
+from .decoder import (
+    DATA_DIR_ENV_VAR,
+    SEINOKYO_SEARCH_URL,
+    CertDecoder,
+    format_load_bearing_label,
+)
 from .screener import (
     STATUS_FOUND,
     STATUS_INVALID_FORMAT,
     STATUS_LABELS,
+    STATUS_UNCHECKED,
     STATUS_UNLISTED_VALID_FORMAT,
     CertScreener,
 )
@@ -39,11 +45,6 @@ def _try_open_db(data_dir: str | None, *, required: bool) -> CertDatabase | None
     except FileNotFoundError as exc:
         if required:
             print(f"エラー: {exc}", file=sys.stderr)
-            print(
-                "ローカル台帳データ（data/manifest.json）が見つかりません。"
-                " --data-dir で指定するか、データ生成スクリプトを実行してください。",
-                file=sys.stderr,
-            )
             raise SystemExit(2) from exc
         return None
 
@@ -58,13 +59,19 @@ def _cmd_decode(args: argparse.Namespace) -> int:
     results: list[dict[str, Any]] = []
     for raw_no in args.cert_nos:
         dec = decoder.decode(raw_no)
-        ledger = db.lookup(dec.cert_no) if (db is not None and dec.cert_no) else None
-        if ledger is not None:
-            status = STATUS_FOUND
-        elif dec.is_valid_format:
-            status = STATUS_UNLISTED_VALID_FORMAT
+        ledger: dict[str, Any] | None = None
+        if db is not None:
+            ledger = db.lookup(dec.cert_no) if dec.cert_no else None
+            if ledger is not None:
+                status = STATUS_FOUND
+            elif dec.is_valid_format:
+                status = STATUS_UNLISTED_VALID_FORMAT
+            else:
+                status = STATUS_INVALID_FORMAT
         else:
-            status = STATUS_INVALID_FORMAT
+            status = (
+                STATUS_UNCHECKED if dec.is_valid_format else STATUS_INVALID_FORMAT
+            )
 
         results.append(
             {
@@ -113,16 +120,15 @@ def _cmd_decode(args: argparse.Namespace) -> int:
             for w in dec_d["warnings"]:
                 print(f"  [注意]       : {w}")
 
-        if db is not None:
-            print(f"  台帳照合     : {item['status_label']} ({status})")
-            if rec:
-                print(f"  構造方法名   : {rec.get('title') or '-'}")
-                print(f"  申請者       : {rec.get('applicant') or '-'}")
-                print(f"  認定年月日   : {rec.get('date_jp') or '-'} ({rec.get('date') or '-'})")
-                print(f"  性能評価機関 : {rec.get('evaluator') or '-'}")
-                print(f"  台帳カテゴリ : {rec.get('category_name') or '-'}")
-            elif status == STATUS_UNLISTED_VALID_FORMAT:
-                print(f"  最新確認URL  : {SEINOKYO_SEARCH_URL}")
+        print(f"  台帳照合     : {item['status_label']} ({status})")
+        if rec:
+            print(f"  構造方法名   : {rec.get('title') or '-'}")
+            print(f"  申請者       : {rec.get('applicant') or '-'}")
+            print(f"  認定年月日   : {rec.get('date_jp') or '-'} ({rec.get('date') or '-'})")
+            print(f"  性能評価機関 : {rec.get('evaluator') or '-'}")
+            print(f"  台帳カテゴリ : {rec.get('category_name') or '-'}")
+        elif status in (STATUS_UNLISTED_VALID_FORMAT, STATUS_UNCHECKED):
+            print(f"  最新確認URL  : {SEINOKYO_SEARCH_URL}")
 
     return 0
 
@@ -238,7 +244,7 @@ def build_parser() -> argparse.ArgumentParser:
     # decode
     p_decode = subparsers.add_parser(
         "decode",
-        help="大臣認定番号の記号ルールをデコードし、R5.4台帳と照合する",
+        help="大臣認定番号の記号ルールをデコードし、公開台帳と照合する",
     )
     p_decode.add_argument(
         "cert_nos",
@@ -253,19 +259,19 @@ def build_parser() -> argparse.ArgumentParser:
     p_decode.add_argument(
         "--no-db",
         action="store_true",
-        help="ローカル台帳との照合をスキップし、記号デコードのみ実行する",
+        help="ローカル台帳との照合をスキップし、記号デコードのみ実行する（有効形式は UNCHECKED）",
     )
     p_decode.add_argument(
         "--data-dir",
         default=None,
-        help="data/ ディレクトリのパス（省略時はリポジトリ内の data/）",
+        help=f"data/ ディレクトリのパス（省略時は環境変数 {DATA_DIR_ENV_VAR} またはリポジトリ内 data/）",
     )
     p_decode.set_defaults(func=_cmd_decode)
 
     # search
     p_search = subparsers.add_parser(
         "search",
-        help="ローカルのR5.4国交省公開帳簿データを検索する",
+        help="ローカルの国交省公開帳簿データを検索する",
     )
     p_search.add_argument(
         "--q",
@@ -323,7 +329,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_search.add_argument(
         "--data-dir",
         default=None,
-        help="data/ ディレクトリのパス（省略時はリポジトリ内の data/）",
+        help=f"data/ ディレクトリのパス（省略時は環境変数 {DATA_DIR_ENV_VAR} またはリポジトリ内 data/）",
     )
     p_search.set_defaults(func=_cmd_search)
 
@@ -350,12 +356,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_screen.add_argument(
         "--no-db",
         action="store_true",
-        help="ローカル台帳との照合をスキップし、記号デコードと文脈チェックのみ実行する",
+        help="ローカル台帳との照合をスキップし、記号デコードと文脈チェックのみ実行する（有効形式は UNCHECKED）",
     )
     p_screen.add_argument(
         "--data-dir",
         default=None,
-        help="data/ ディレクトリのパス（省略時はリポジトリ内の data/）",
+        help=f"data/ ディレクトリのパス（省略時は環境変数 {DATA_DIR_ENV_VAR} またはリポジトリ内 data/）",
     )
     p_screen.set_defaults(func=_cmd_screen)
 

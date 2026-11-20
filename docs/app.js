@@ -32,10 +32,13 @@
      ======================================================================== */
   const appState = {
     manifest: null,
+    manifestLoadFailed: false,
+    cutoffDateJp: null,
     categoriesById: new Map(),
     prefixToCatIds: new Map(),
     categoryCache: new Map(),           // catId -> Array<Record>
     categoryInFlight: new Map(),        // catId -> Promise<Array<Record>>
+    failedCatIds: new Set(),            // catIds whose JSON fetch failed (e.g. HTTP 503)
     certIndex: new Map(),               // normCertNo -> Array<Record>
     loadedCatIds: new Set(),
     allRecordsCache: null,              // flattened cache of all loaded records
@@ -256,6 +259,58 @@
     return res.json();
   }
 
+  function extractCutoffDateJp(dataPeriod) {
+    if (!dataPeriod) return '';
+    const s = String(dataPeriod);
+    const matches = s.match(/(?:令和|平成|昭和)(?:元|\d+)年\d{1,2}月\d{1,2}日/g);
+    if (matches && matches.length > 0) {
+      return matches[matches.length - 1].replace(/0(\d)[月日]/g, (m, d) => d + m.slice(-1));
+    }
+    return s;
+  }
+
+  function getCutoffLabel() {
+    return appState.cutoffDateJp || '公開帳簿基準日';
+  }
+
+  function getDataPeriodLabel() {
+    return (appState.manifest && appState.manifest.data_period) || '国土交通省公開帳簿';
+  }
+
+  function getCategoryDisplayName(catId) {
+    if (catId === '__manifest__') return 'データマニフェスト（manifest.json）';
+    const c = appState.categoriesById.get(catId);
+    return c ? c.name : catId;
+  }
+
+  function applyManifestMetadata(manifest) {
+    const cutoff = extractCutoffDateJp(manifest.data_period) || '公開帳簿基準日';
+    appState.cutoffDateJp = cutoff;
+
+    const totalEl = $('badge-total-records');
+    if (totalEl) {
+      const span = totalEl.querySelector('span');
+      if (span) span.textContent = '全 ' + formatNumber(manifest.total_records) + ' 件収録';
+    }
+    const dateEl = $('badge-data-date');
+    if (dateEl) {
+      dateEl.textContent = 'データ基準日：' + cutoff + '（国交省公開帳簿）';
+      if (manifest.data_period) dateEl.title = '収録期間: ' + manifest.data_period;
+    }
+    const ledgerHeading = $('decoder-ledger-heading');
+    if (ledgerHeading) {
+      ledgerHeading.textContent = '国交省公開帳簿 照合結果（' + cutoff + '基準）';
+    }
+    const footerLink = $('footer-source-link');
+    if (footerLink && manifest.source_url) {
+      footerLink.href = manifest.source_url;
+    }
+    const footerDate = $('footer-data-date');
+    if (footerDate) footerDate.textContent = cutoff;
+    const footerDiscDate = $('footer-disclaimer-date');
+    if (footerDiscDate) footerDiscDate.textContent = cutoff + '時点';
+  }
+
   async function initData() {
     const [manifestRes, rulesRes] = await Promise.allSettled([
       fetchJson('./data/manifest.json'),
@@ -269,28 +324,28 @@
     renderQuickReference();
 
     if (manifestRes.status !== 'fulfilled' || !manifestRes.value) {
+      appState.manifestLoadFailed = true;
       const errMsg = manifestRes.reason ? manifestRes.reason.message : 'manifest.json の取得に失敗しました。';
       showGlobalError(
         'データマニフェスト（./data/manifest.json）を読み込めませんでした。ローカルで閲覧する場合は docs/ ディレクトリ内で `python -m http.server` 等を起動してアクセスしてください。詳細: ' + errMsg
       );
-      return;
+      if ($('badge-data-date')) {
+        $('badge-data-date').textContent = 'データ基準日：マニフェスト未読込';
+      }
+      updateLoadedStatusUi();
+      return false;
     }
+
+    appState.manifestLoadFailed = false;
+    hideGlobalError();
 
     const manifest = manifestRes.value;
     appState.manifest = manifest;
-
-    // Header badges
-    const totalEl = $('badge-total-records');
-    if (totalEl) {
-      const span = totalEl.querySelector('span');
-      if (span) span.textContent = '全 ' + formatNumber(manifest.total_records) + ' 件収録';
-    }
-    const dateEl = $('badge-data-date');
-    if (dateEl && manifest.data_period) {
-      dateEl.title = '収録期間: ' + manifest.data_period;
-    }
+    applyManifestMetadata(manifest);
 
     // Build lookup maps
+    appState.categoriesById.clear();
+    appState.prefixToCatIds.clear();
     const categories = Array.isArray(manifest.categories) ? manifest.categories : [];
     Decoder.registerManifestPrefixes(categories);
 
@@ -318,6 +373,7 @@
     }
     updateLoadedStatusUi();
     ensureAllCategoriesLoaded();
+    return true;
   }
 
   function showGlobalError(msg) {
@@ -327,6 +383,11 @@
       txt.textContent = msg;
       box.classList.remove('hidden');
     }
+  }
+
+  function hideGlobalError() {
+    const box = $('global-error');
+    if (box) box.classList.add('hidden');
   }
 
   function getAllCategoryIdsPrioritized() {
@@ -417,13 +478,16 @@
         }
         appState.categoryCache.set(catId, list);
         appState.loadedCatIds.add(catId);
+        appState.failedCatIds.delete(catId);
         appState.allRecordsCache = null; // invalidate flat cache
         appState.categoryInFlight.delete(catId);
         updateLoadedStatusUi();
         return list;
       })
       .catch((err) => {
+        appState.failedCatIds.add(catId);
         appState.categoryInFlight.delete(catId);
+        updateLoadedStatusUi();
         console.error('Failed to load category ' + catId, err);
         throw err;
       });
@@ -434,17 +498,20 @@
 
   /**
    * Load multiple categories concurrently with progress callback and event-loop yields.
+   * Never swallows failures silently: records them in appState.failedCatIds and returns { loadedIds, failedIds }.
    */
   async function loadCategoriesBatch(catIds, onProgress) {
     const uniqueIds = Array.from(new Set(catIds)).filter((id) => appState.categoriesById.has(id));
     const total = uniqueIds.length;
     if (total === 0) {
-      if (onProgress) onProgress(0, 0, 0);
-      return;
+      if (onProgress) onProgress(0, 0, 0, 0);
+      return { loadedIds: [], failedIds: [] };
     }
 
     let completed = 0;
     let totalRowsLoaded = 0;
+    const loadedIds = [];
+    const failedIds = [];
     const concurrency = 4;
     let cursor = 0;
 
@@ -455,11 +522,13 @@
         try {
           const rows = await loadCategory(id);
           totalRowsLoaded += rows.length;
+          loadedIds.push(id);
         } catch (e) {
-          // Continue loading remaining categories
+          appState.failedCatIds.add(id);
+          failedIds.push(id);
         }
         completed++;
-        if (onProgress) onProgress(completed, total, totalRowsLoaded);
+        if (onProgress) onProgress(completed, total, totalRowsLoaded, failedIds.length);
         // Yield briefly to keep typing & scrolling smooth during bulk JSON parsing
         await new Promise((resolve) => setTimeout(resolve, 0));
       }
@@ -470,6 +539,7 @@
       workers.push(worker());
     }
     await Promise.all(workers);
+    return { loadedIds: loadedIds, failedIds: failedIds };
   }
 
   /**
@@ -485,10 +555,19 @@
       return Array.from(appState.prefixToCatIds.get(p));
     }
 
-    // 2. Family fallback for newer/unlisted prefixes (e.g. QF075BE -> any category having QF* prefixes)
-    const fam2 = p.slice(0, 2);
+    // 2. Family fallback for newer/unlisted prefixes (e.g. QF075BE, EH090, FPLH060BE, QPEP020BE)
     const matched = new Set();
-    if (['FP', 'QF', 'PC', 'QP', 'PS', 'NH', 'FI', 'EA', 'EB', 'EC', 'NM', 'QM', 'RM', 'SO', 'MF'].indexOf(fam2) !== -1) {
+    const fam4 = p.slice(0, 4);
+    const fam2 = p.slice(0, 2);
+    if (['FPLH', 'QPEP', 'QFRM', 'MCLT', 'MCMU', 'MBLK'].indexOf(fam4) !== -1) {
+      appState.prefixToCatIds.forEach((catSet, existingPrefix) => {
+        if (existingPrefix.startsWith(fam4) || existingPrefix.startsWith(fam2)) {
+          catSet.forEach((id) => matched.add(id));
+        }
+      });
+    }
+    if (matched.size === 0 &&
+        ['FP', 'QF', 'PC', 'QP', 'PS', 'NH', 'FI', 'EA', 'EB', 'EC', 'ED', 'EH', 'EQ', 'NM', 'QM', 'RM', 'SO', 'MF'].indexOf(fam2) !== -1) {
       appState.prefixToCatIds.forEach((catSet, existingPrefix) => {
         if (existingPrefix.startsWith(fam2)) {
           catSet.forEach((id) => matched.add(id));
@@ -496,6 +575,28 @@
       });
     }
     return Array.from(matched);
+  }
+
+  function getFailedCategoryIdsForCurrentScope() {
+    if (appState.manifestLoadFailed || !appState.manifest) {
+      return ['__manifest__'];
+    }
+    if (isAllCategoriesSelected()) {
+      return Array.from(appState.failedCatIds);
+    }
+    const catId = $('search-category') ? $('search-category').value : '';
+    return (catId && appState.failedCatIds.has(catId)) ? [catId] : [];
+  }
+
+  function getUnloadedCategoryIdsForCurrentScope() {
+    if (!appState.manifest || !Array.isArray(appState.manifest.categories)) return ['__manifest__'];
+    if (isAllCategoriesSelected()) {
+      return appState.manifest.categories
+        .map((c) => c.id)
+        .filter((id) => !appState.categoryCache.has(id));
+    }
+    const catId = $('search-category') ? $('search-category').value : '';
+    return (catId && !appState.categoryCache.has(catId)) ? [catId] : [];
   }
 
   function getTotalCategoriesCount() {
@@ -522,22 +623,65 @@
 
   function isAllCategoriesLoaded() {
     const totalCats = getTotalCategoriesCount();
-    return totalCats > 0 && appState.loadedCatIds.size >= totalCats;
+    return totalCats > 0 && appState.loadedCatIds.size >= totalCats && appState.failedCatIds.size === 0;
   }
 
   function updateLoadedStatusUi() {
     const badge = $('loaded-status-badge');
-    if (!badge) return;
+    const retryBtn = $('btn-retry-failed');
+    const failBanner = $('search-failed-banner');
+    const failMsg = $('search-failed-msg');
+
     const totalCats = getTotalCategoriesCount();
     const loadedCats = appState.loadedCatIds.size;
+    const failedCount = appState.failedCatIds.size;
     const loadedRows = getAllLoadedRecords().length;
 
-    if (totalCats > 0 && loadedCats >= totalCats) {
-      badge.className = 'badge badge--emerald';
-      badge.textContent = '✓ 全' + totalCats + '区分 読込済（' + formatNumber(loadedRows) + '件・横断検索対応）';
-    } else if (totalCats > 0) {
-      badge.className = 'badge badge--indigo';
-      badge.textContent = '読込中：' + loadedCats + ' / ' + totalCats + ' 区分（' + formatNumber(loadedRows) + '件キャッシュ済）';
+    if (appState.manifestLoadFailed || !appState.manifest) {
+      if (badge) {
+        badge.className = 'badge badge--rose';
+        badge.textContent = '⚠ マニフェスト未読込（検索不可）';
+      }
+      if (retryBtn) {
+        retryBtn.classList.remove('hidden');
+        retryBtn.textContent = 'マニフェスト読込を再試行';
+      }
+      return;
+    }
+
+    if (badge) {
+      if (failedCount > 0) {
+        badge.className = 'badge badge--rose';
+        badge.textContent =
+          '⚠ 一部読込失敗：' + loadedCats + ' / ' + totalCats + ' 区分（' + failedCount + '区分未読込）';
+      } else if (totalCats > 0 && loadedCats >= totalCats) {
+        badge.className = 'badge badge--emerald';
+        badge.textContent = '✓ 全' + totalCats + '区分 読込済（' + formatNumber(loadedRows) + '件・横断検索対応）';
+      } else if (totalCats > 0) {
+        badge.className = 'badge badge--indigo';
+        badge.textContent = '読込中：' + loadedCats + ' / ' + totalCats + ' 区分（' + formatNumber(loadedRows) + '件キャッシュ済）';
+      }
+    }
+
+    if (retryBtn) {
+      if (failedCount > 0) {
+        retryBtn.classList.remove('hidden');
+        retryBtn.textContent = '失敗区分を再試行（' + failedCount + '区分）';
+      } else {
+        retryBtn.classList.add('hidden');
+      }
+    }
+
+    if (failBanner && failMsg) {
+      if (failedCount > 0) {
+        const names = Array.from(appState.failedCatIds).map(getCategoryDisplayName);
+        failMsg.textContent =
+          '未読込の区分（' + failedCount + '区分）：' + names.join('、') +
+          '。これらの区分のレコードは検索結果およびCSV出力に含まれません。「失敗区分を再試行」をクリックして再読込してください。';
+        failBanner.classList.remove('hidden');
+      } else {
+        failBanner.classList.add('hidden');
+      }
     }
   }
 
@@ -547,7 +691,7 @@
       appState.progressiveRefreshTimer = null;
       if (!isAllCategoriesSelected()) return;
       refreshPrefixFilterOptions();
-      runSearchFilter({ preservePage: appState.hasRenderedInitialBatch });
+      runSearchFilter({ preservePage: appState.hasRenderedInitialBatch, skipAutoEnsure: true });
       appState.hasRenderedInitialBatch = true;
     };
 
@@ -568,12 +712,13 @@
   /**
    * Seamlessly fetch all unloaded categories in the background with live progress UI.
    * Deduplicated via singleton promise so multiple callers share the same in-flight work.
+   * When forceRetryFailed=true, retries categories currently marked in failedCatIds.
    */
-  function ensureAllCategoriesLoaded() {
-    if (!appState.manifest) return Promise.resolve();
+  function ensureAllCategoriesLoaded(forceRetryFailed) {
+    if (!appState.manifest) return Promise.resolve({ loadedIds: [], failedIds: ['__manifest__'] });
     if (isAllCategoriesLoaded()) {
       updateLoadedStatusUi();
-      return Promise.resolve();
+      return Promise.resolve({ loadedIds: [], failedIds: [] });
     }
     if (appState.allCategoriesLoadPromise) {
       return appState.allCategoriesLoadPromise;
@@ -581,10 +726,14 @@
 
     const allIds = getAllCategoryIdsPrioritized();
     const totalCats = allIds.length;
-    const unloadedIds = allIds.filter((id) => !appState.categoryCache.has(id));
-    if (unloadedIds.length === 0) {
+    const targetIds = allIds.filter((id) => {
+      if (appState.categoryCache.has(id)) return false;
+      if (!forceRetryFailed && appState.failedCatIds.has(id)) return false;
+      return true;
+    });
+    if (targetIds.length === 0) {
       updateLoadedStatusUi();
-      return Promise.resolve();
+      return Promise.resolve({ loadedIds: [], failedIds: Array.from(appState.failedCatIds) });
     }
 
     appState.isLoadingCategories = true;
@@ -595,12 +744,15 @@
 
     const updateProgressBar = () => {
       const doneCats = appState.loadedCatIds.size;
+      const failCats = appState.failedCatIds.size;
       const loadedRows = getAllLoadedRecords().length;
-      const pct = totalCats > 0 ? Math.round((doneCats / totalCats) * 100) : 100;
+      const attempted = doneCats + failCats;
+      const pct = totalCats > 0 ? Math.min(100, Math.round((attempted / totalCats) * 100)) : 100;
       if (textEl) {
+        const failNote = failCats > 0 ? '・失敗 ' + failCats + ' 区分' : '';
         textEl.textContent =
-          '全' + totalCats + '区分をバックグラウンド読込中…（' +
-          doneCats + ' / ' + totalCats + ' 区分・' + formatNumber(loadedRows) + ' 件）';
+          '全' + totalCats + '区分をバックグラウンド読込中…（完了 ' +
+          doneCats + ' / ' + totalCats + ' 区分・' + formatNumber(loadedRows) + ' 件' + failNote + '）';
       }
       if (pctEl) pctEl.textContent = pct + '%';
       if (fillEl) fillEl.style.width = pct + '%';
@@ -609,7 +761,7 @@
     if (box) box.classList.remove('hidden');
     updateProgressBar();
 
-    const p = loadCategoriesBatch(unloadedIds, () => {
+    const p = loadCategoriesBatch(targetIds, () => {
       updateProgressBar();
       updateLoadedStatusUi();
       scheduleProgressiveRefresh(false);
@@ -625,11 +777,38 @@
         if (box && !appState.isLoadingCategories) {
           box.classList.add('hidden');
         }
-      }, 500);
+      }, 600);
     });
 
     appState.allCategoriesLoadPromise = p;
     return p;
+  }
+
+  async function retryFailedCategories() {
+    if (appState.manifestLoadFailed || !appState.manifest) {
+      await initData();
+      return;
+    }
+    const failed = Array.from(appState.failedCatIds);
+    if (failed.length === 0) {
+      showToast('再試行対象の失敗区分はありません');
+      return;
+    }
+    const retryBtn = $('btn-retry-failed');
+    if (retryBtn) retryBtn.disabled = true;
+    try {
+      await ensureAllCategoriesLoaded(true);
+      const remaining = appState.failedCatIds.size;
+      if (remaining === 0) {
+        showToast('失敗区分の再読み込みが完了しました');
+      } else {
+        showToast('一部区分（' + remaining + '区分）の再読み込みに再度失敗しました');
+      }
+      refreshPrefixFilterOptions();
+      runSearchFilter({ preservePage: true, skipAutoEnsure: true });
+    } finally {
+      if (retryBtn) retryBtn.disabled = false;
+    }
   }
 
   /* ========================================================================
@@ -682,8 +861,9 @@
 
   function runSearchFilter(opts) {
     const preservePage = Boolean(opts && opts.preservePage);
-    if (isAllCategoriesSelected() && appState.manifest && !isAllCategoriesLoaded()) {
-      ensureAllCategoriesLoaded();
+    const skipAutoEnsure = Boolean(opts && opts.skipAutoEnsure);
+    if (!skipAutoEnsure && isAllCategoriesSelected() && appState.manifest && !isAllCategoriesLoaded()) {
+      ensureAllCategoriesLoaded(false);
     }
 
     const records = getScopedRecords();
@@ -761,7 +941,9 @@
     const total = appState.searchFiltered.length;
     const scopeTotal = getScopedRecords().length;
     const allMode = isAllCategoriesSelected();
-    const stillLoadingAll = allMode && !isAllCategoriesLoaded();
+    const stillLoadingAll = allMode && appState.isLoadingCategories;
+    const failedScopeIds = getFailedCategoryIdsForCurrentScope();
+    const unloadedScopeIds = getUnloadedCategoryIdsForCurrentScope();
     const totalCats = getTotalCategoriesCount();
     const pageSize = appState.searchPageSize;
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -771,30 +953,37 @@
     const endIdx = Math.min(total, startIdx + pageSize);
 
     if (summaryEl) {
+      const incompleteTag = failedScopeIds.length > 0
+        ? ' <span class="badge badge--rose">※ ' + failedScopeIds.length + '区分読込失敗（結果不完全）</span>'
+        : '';
       if (stillLoadingAll) {
         summaryEl.innerHTML =
           '該当 <strong>' + formatNumber(total) + '</strong> 件' +
           '（全区分読込中：' + appState.loadedCatIds.size + ' / ' + totalCats + ' 区分・' +
-          formatNumber(scopeTotal) + ' 件を検索済…）';
+          formatNumber(scopeTotal) + ' 件を検索済…）' + incompleteTag;
       } else if (allMode) {
         summaryEl.innerHTML =
           '該当 <strong>' + formatNumber(total) + '</strong> 件' +
-          '（全' + totalCats + '区分・' + formatNumber(scopeTotal) + ' 件中）';
+          '（' + appState.loadedCatIds.size + ' / ' + totalCats + '区分・' + formatNumber(scopeTotal) + ' 件中）' + incompleteTag;
       } else {
         const catObj = appState.categoriesById.get($('search-category').value);
         const catLabel = catObj ? catObj.name : '選択カテゴリ';
         summaryEl.innerHTML =
           '該当 <strong>' + formatNumber(total) + '</strong> 件' +
-          '（' + escapeHtml(catLabel) + '・' + formatNumber(scopeTotal) + ' 件中）';
+          '（' + escapeHtml(catLabel) + '・' + formatNumber(scopeTotal) + ' 件中）' + incompleteTag;
       }
     }
     if (exportBtn) {
       exportBtn.disabled = total === 0;
+      exportBtn.textContent = (failedScopeIds.length > 0 || unloadedScopeIds.length > 0)
+        ? '検索結果をCSV出力（一部未読込あり）'
+        : '検索結果をCSV出力';
     }
 
     tbody.innerHTML = '';
     if (total === 0) {
       const tr = document.createElement('tr');
+      const selectedCatId = $('search-category') ? $('search-category').value : '';
       if (stillLoadingAll) {
         tr.innerHTML =
           '<td colspan="6" class="empty-state">' +
@@ -802,14 +991,24 @@
           appState.loadedCatIds.size + ' / ' + totalCats + ' 区分完了）…</strong></p>' +
           '<p>一致する認定レコードが見つかり次第、自動的に一覧へ表示されます。</p>' +
           '</td>';
+      } else if (!allMode && selectedCatId && appState.failedCatIds.has(selectedCatId)) {
+        tr.innerHTML =
+          '<td colspan="6" class="empty-state">' +
+          '<p><strong>選択した区分（' + escapeHtml(getCategoryDisplayName(selectedCatId)) + '）のデータ読み込みに失敗しました。</strong></p>' +
+          '<p>データ未読込のため照合できませんでした（未掲載ではありません）。通信状態を確認して再試行してください。</p>' +
+          '<p style="margin-top:10px;"><button type="button" class="btn btn--sm btn--rose inline-retry-failed-btn">失敗区分を再試行</button></p>' +
+          '</td>';
       } else {
         const hintText = allMode
           ? 'キーワード・記号フィルタ・期間条件を見直してお試しください。'
           : 'キーワード・フィルタ条件を見直すか、カテゴリを「すべて（全区分）」に切り替えてお試しください。';
+        const failExtra = failedScopeIds.length > 0
+          ? '<br><strong style="color:var(--rose-text);">※ なお、' + failedScopeIds.length + '区分が読込失敗のため未照合です。再試行してご確認ください。</strong>'
+          : '';
         tr.innerHTML =
           '<td colspan="6" class="empty-state">' +
           '<p><strong>条件に一致する認定レコードが見つかりませんでした。</strong></p>' +
-          '<p>' + hintText + '<br>令和5年5月以降の新規認定は「認定番号 デコーダ」または建築性能基準推進協会（性能協）公式DBでご確認いただけます。</p>' +
+          '<p>' + hintText + failExtra + '<br>公開帳簿の基準日（' + escapeHtml(getCutoffLabel()) + '）以降の新規認定は「認定番号 デコーダ」または建築性能基準推進協会（性能協）公式DBでご確認いただけます。</p>' +
           '</td>';
       }
       tbody.appendChild(tr);
@@ -880,9 +1079,15 @@
             runSearchFilter();
           }
         } catch (err) {
-          $('search-tbody').innerHTML = '<tr><td colspan="6" class="empty-state">読み込みに失敗しました: ' + escapeHtml(err.message) + '</td></tr>';
+          if (catSelect.value === catId) {
+            runSearchFilter({ skipAutoEnsure: true });
+          }
         }
       });
+    }
+
+    if ($('btn-retry-failed')) {
+      $('btn-retry-failed').addEventListener('click', retryFailedCategories);
     }
 
     if ($('btn-reset-to-all')) {
@@ -942,10 +1147,14 @@
       renderSearchTable();
     });
 
-    // Row click / keyboard open modal
+    // Row click / keyboard open modal (plus inline retry button for failed single category)
     const tbody = $('search-tbody');
     if (tbody) {
       tbody.addEventListener('click', function (e) {
+        if (e.target.closest('.inline-retry-failed-btn')) {
+          retryFailedCategories();
+          return;
+        }
         const tr = e.target.closest('tr.clickable-row');
         if (!tr) return;
         const idx = parseInt(tr.dataset.rowIdx, 10);
@@ -964,9 +1173,18 @@
       });
     }
 
-    // Export search results as CSV
+    // Export search results as CSV (explicitly marks incomplete scope if any categories failed or remain unloaded)
     if ($('btn-export-search-csv')) {
       $('btn-export-search-csv').addEventListener('click', function () {
+        const failedIds = getFailedCategoryIdsForCurrentScope();
+        const unloadedIds = getUnloadedCategoryIdsForCurrentScope();
+        const missingIds = Array.from(new Set(failedIds.concat(unloadedIds)));
+        const isIncomplete = missingIds.length > 0;
+        const missingNames = missingIds.map(getCategoryDisplayName).join('・');
+        const completenessNote = isIncomplete
+          ? '不完全（一部区分未読込：' + missingNames + '）'
+          : '完全（対象区分すべて読込済）';
+
         const rows = appState.searchFiltered.map((r) => [
           r.cert_no,
           r.prefix,
@@ -977,14 +1195,22 @@
           r.applicant,
           r.address,
           r.evaluator,
-          r.period
+          r.period,
+          completenessNote
         ]);
+        const filename = isIncomplete
+          ? 'daijin-nintei-search-results-incomplete.csv'
+          : 'daijin-nintei-search-results.csv';
         downloadCsv(
-          'daijin-nintei-search-results.csv',
-          ['認定番号', '記号', 'カテゴリ', '認定年月日(和暦)', '認定年月日(ISO)', '構造方法等の名称', '申請者', '住所', '性能評価機関', '帳簿区分'],
+          filename,
+          ['認定番号', '記号', 'カテゴリ', '認定年月日(和暦)', '認定年月日(ISO)', '構造方法等の名称', '申請者', '住所', '性能評価機関', '帳簿区分', 'データ完全性'],
           rows
         );
-        showToast(formatNumber(rows.length) + ' 件をCSV出力しました');
+        if (isIncomplete) {
+          showToast('⚠ 一部区分（' + missingIds.length + '区分）が未読込のため不完全な結果（' + formatNumber(rows.length) + '件）をCSV出力しました');
+        } else {
+          showToast(formatNumber(rows.length) + ' 件をCSV出力しました');
+        }
       });
     }
   }
@@ -1024,9 +1250,10 @@
 
     const loadBearingText = formatLoadBearing(decoded);
 
+    const cutoffLabel = getCutoffLabel();
     const revokedBanner = isRevokedRecord(record)
       ? '<div class="status-banner status-banner--invalid" style="margin-bottom: 14px;">' +
-          '<div class="status-banner-title">⚠ R5.4帳簿上で取消・失効の記載があります</div>' +
+          '<div class="status-banner-title">⚠ 公開帳簿上で取消・失効の記載があります</div>' +
           '<p>帳簿記載：' + escapeHtml(record.date_jp) + '。現在の効力・取扱いは必ず建築性能基準推進協会（性能協）公式DBおよび認定書原本をご確認ください。</p>' +
         '</div>'
       : '';
@@ -1041,7 +1268,7 @@
         '<dt>対象部位・耐力</dt><dd>' + escapeHtml((decoded.part || '—') + (decoded.load_bearing !== null ? '（' + loadBearingText + '）' : '')) + '</dd>' +
         '<dt>根拠条文</dt><dd>' + escapeHtml(decoded.law_article || '—') + '</dd>' +
       '</dl>' +
-      '<div class="modal-section-title">国交省公開帳簿メタデータ（令和5年4月30日基準）</div>' +
+      '<div class="modal-section-title">国交省公開帳簿メタデータ（' + escapeHtml(cutoffLabel) + '基準）</div>' +
       '<dl class="spec-dl">' +
         '<dt>認定番号</dt><dd class="mono"><strong>' + escapeHtml(record.cert_no) + '</strong></dd>' +
         '<dt>構造方法等の名称</dt><dd>' + escapeHtml(record.title || '—') + '</dd>' +
@@ -1053,7 +1280,7 @@
         '<dt>帳簿区分</dt><dd>' + escapeHtml(formatPeriodLabel(record.period)) + '</dd>' +
       '</dl>' +
       '<div class="status-banner status-banner--unlisted" style="margin-top: 16px; margin-bottom: 0;">' +
-        '<p>※ 本データは令和5年4月30日時点の公開帳簿に基づく情報です。最新の有効性（変更・取消の有無）および具体的な構造仕様（別添）は、一般社団法人 建築性能基準推進協会（性能協）公式DBおよび認定書原本にて必ずご確認ください。</p>' +
+        '<p>※ 本データは' + escapeHtml(cutoffLabel) + '時点の公開帳簿に基づく情報です。最新の有効性（変更・取消の有無）および具体的な構造仕様（別添）は、一般社団法人 建築性能基準推進協会（性能協）公式DBおよび認定書原本にて必ずご確認ください。</p>' +
       '</div>';
 
     $('modal-body').innerHTML = bodyHtml;
@@ -1149,9 +1376,44 @@
       '<dt>根拠条文</dt><dd>' + escapeHtml(decoded.law_article || '—') + '</dd>' +
       '<dt>解説</dt><dd>' + escapeHtml(decoded.description || '—') + '</dd>';
 
-    // Ledger lookup (async, on-demand category loading)
+    // Ledger lookup (async, on-demand category loading with strict failure detection)
     const ledgerEl = $('decoder-ledger-result');
-    ledgerEl.innerHTML = '<p class="card-desc">該当カテゴリのR5.4帳簿データを確認しています…</p>';
+    const seinokyoUrl = Decoder.getSeinokyoUrl();
+    const cutoffLabel = getCutoffLabel();
+
+    if (!appState.manifest || appState.manifestLoadFailed) {
+      if (!decoded.is_valid_format) {
+        ledgerEl.innerHTML =
+          '<div class="status-banner status-banner--invalid">' +
+            '<div class="status-banner-title">✕ 記号形式の不一致（台帳未照合）</div>' +
+            '<p>入力された文字列は標準的な大臣認定番号の規則と一致しません。また、マニフェスト未読込のため公開帳簿との照合は実行されていません。</p>' +
+          '</div>' +
+          '<div class="scope-actions">' +
+            '<button id="btn-decoder-retry" type="button" class="btn btn--sm btn--rose">台帳読込を再試行</button>' +
+            '<a class="btn btn--sm" href="' + escapeHtml(seinokyoUrl) + '" target="_blank" rel="noopener noreferrer">建築性能基準推進協会（性能協DB）を開く ↗</a>' +
+          '</div>';
+      } else {
+        ledgerEl.innerHTML =
+          '<div class="status-banner status-banner--unchecked">' +
+            '<div class="status-banner-title">? 台帳未照合（データ読込失敗：マニフェスト未読込）</div>' +
+            '<p>記号形式は国交省ルールに整合していますが、データマニフェスト（manifest.json）の読み込みに失敗しているため、公開帳簿への掲載有無を照合できませんでした（<strong>未掲載ではありません</strong>）。</p>' +
+          '</div>' +
+          '<div class="scope-actions">' +
+            '<button id="btn-decoder-retry" type="button" class="btn btn--sm btn--primary">データ読込を再試行</button>' +
+            '<a class="btn btn--sm" href="' + escapeHtml(seinokyoUrl) + '" target="_blank" rel="noopener noreferrer">建築性能基準推進協会（性能協DB）で検索 ↗</a>' +
+          '</div>';
+      }
+      const retryBtn0 = $('btn-decoder-retry');
+      if (retryBtn0) {
+        retryBtn0.addEventListener('click', async () => {
+          await initData();
+          runDecoder(trimmed);
+        });
+      }
+      return;
+    }
+
+    ledgerEl.innerHTML = '<p class="card-desc">該当カテゴリの公開帳簿データを確認しています…</p>';
 
     const candidateCatIds = findCandidateCategoryIdsForPrefix(decoded.prefix);
     if (candidateCatIds.length > 0) {
@@ -1162,7 +1424,9 @@
     if (seq !== appState.decoderReqSeq) return;
 
     const hits = appState.certIndex.get(decoded.cert_no) || [];
-    const seinokyoUrl = Decoder.getSeinokyoUrl();
+    const failedCandidates = candidateCatIds.filter(
+      (id) => appState.failedCatIds.has(id) || !appState.categoryCache.has(id)
+    );
 
     if (hits.length > 0) {
       const rec = hits[0];
@@ -1170,11 +1434,11 @@
       const revoked = isRevokedRecord(rec);
       const bannerCls = revoked ? 'status-banner status-banner--invalid' : 'status-banner status-banner--found';
       const bannerTitle = revoked
-        ? '⚠ R5.4.30 公開帳簿に一致（取消・失効の記載あり）' + extraNote
-        : '✓ R5.4.30 国交省公開帳簿に一致しました' + extraNote;
+        ? '⚠ ' + cutoffLabel + ' 公開帳簿に一致（取消・失効の記載あり）' + extraNote
+        : '✓ ' + cutoffLabel + ' 国交省公開帳簿に一致しました' + extraNote;
       const bannerText = revoked
         ? '帳簿上に取消または失効の記載（' + rec.date_jp + '）があります。採用可否を公式DB・原本で必ず確認してください。'
-        : '令和5年4月30日時点の公開帳簿に収録されている認定番号です。';
+        : cutoffLabel + '時点の公開帳簿に収録されている認定番号です。';
       ledgerEl.innerHTML =
         '<div class="' + bannerCls + '">' +
           '<div class="status-banner-title">' + escapeHtml(bannerTitle) + '</div>' +
@@ -1194,11 +1458,29 @@
 
       const openBtn = $('btn-decoder-open-modal');
       if (openBtn) openBtn.addEventListener('click', () => openDetailModal(rec));
+    } else if (failedCandidates.length > 0 && decoded.is_valid_format) {
+      const failedNames = failedCandidates.map(getCategoryDisplayName).join('、');
+      ledgerEl.innerHTML =
+        '<div class="status-banner status-banner--unchecked">' +
+          '<div class="status-banner-title">? 台帳未照合（データ読込失敗）</div>' +
+          '<p>記号形式は国土交通省の付番ルールに整合していますが、照合対象カテゴリ（<strong>' + escapeHtml(failedNames) + '</strong>）のデータ取得に失敗したため、公開帳簿への掲載有無を照合できませんでした。<strong>未掲載と判定されたわけではありません</strong>。</p>' +
+        '</div>' +
+        '<p class="card-desc" style="margin-bottom: 12px;">通信状態を確認のうえ「再試行」をクリックするか、性能協の公式検索システムで直接ご確認ください。</p>' +
+        '<div class="scope-actions">' +
+          '<button id="btn-decoder-retry" type="button" class="btn btn--sm btn--primary">再試行する</button>' +
+          '<button id="btn-decoder-copy-open" type="button" class="btn btn--sm">番号をコピー</button>' +
+          '<a class="btn btn--sm" href="' + escapeHtml(seinokyoUrl) + '" target="_blank" rel="noopener noreferrer">建築性能基準推進協会（性能協DB）で検索 ↗</a>' +
+        '</div>';
+
+      const retryBtn = $('btn-decoder-retry');
+      if (retryBtn) retryBtn.addEventListener('click', () => runDecoder(trimmed));
+      const cpBtn = $('btn-decoder-copy-open');
+      if (cpBtn) cpBtn.addEventListener('click', () => copyToClipboard(decoded.cert_no, '認定番号「' + decoded.cert_no + '」をコピーしました'));
     } else if (decoded.is_valid_format) {
       ledgerEl.innerHTML =
         '<div class="status-banner status-banner--unlisted">' +
-          '<div class="status-banner-title">▲ R5.4.30 公開帳簿 未掲載（記号形式は妥当）</div>' +
-          '<p>記号体系は国土交通省の付番ルールに整合していますが、令和5年4月30日時点の公開帳簿には一致する番号がありません。<strong>令和5年5月以降の新規認定番号（2023〜2026年等）</strong>、または番号の転記ミスの可能性があります。</p>' +
+          '<div class="status-banner-title">▲ ' + escapeHtml(cutoffLabel) + ' 公開帳簿 未掲載（記号形式は妥当）</div>' +
+          '<p>記号体系は国土交通省の付番ルールに整合していますが、' + escapeHtml(cutoffLabel) + '時点の公開帳簿には一致する番号がありません。<strong>基準日以降の新規認定番号</strong>、または番号の転記ミスの可能性があります。</p>' +
         '</div>' +
         '<p class="card-desc" style="margin-bottom: 12px;">最新の大臣認定・有効性の確認は、一般社団法人 建築性能基準推進協会（性能協）の公式検索システムで認定番号を照会してください。</p>' +
         '<div class="scope-actions">' +
@@ -1209,10 +1491,13 @@
       const cpBtn = $('btn-decoder-copy-open');
       if (cpBtn) cpBtn.addEventListener('click', () => copyToClipboard(decoded.cert_no, '認定番号「' + decoded.cert_no + '」をコピーしました'));
     } else {
+      const extraFail = failedCandidates.length > 0
+        ? '（なお、一部カテゴリのデータ取得にも失敗しています）'
+        : '';
       ledgerEl.innerHTML =
         '<div class="status-banner status-banner--invalid">' +
           '<div class="status-banner-title">✕ 記号形式の不一致・帳簿未一致</div>' +
-          '<p>入力された文字列は標準的な大臣認定番号の規則と一致せず、R5.4.30公開帳簿にも該当がありません。誤記・全角記号・ハイフン欠落等がないかご確認ください。</p>' +
+          '<p>入力された文字列は標準的な大臣認定番号の規則と一致せず、' + escapeHtml(cutoffLabel) + '公開帳簿にも該当がありません' + escapeHtml(extraFail) + '。誤記・全角記号・ハイフン欠落等がないかご確認ください。</p>' +
         '</div>' +
         '<a class="btn btn--sm" href="' + escapeHtml(seinokyoUrl) + '" target="_blank" rel="noopener noreferrer">建築性能基準推進協会（性能協DB）を開く ↗</a>';
     }
@@ -1234,7 +1519,7 @@
       return '<li><span class="ref-code">' + escapeHtml(k) + '</span><span>' + escapeHtml((v.ja || v.name || '') + lb) + '</span></li>';
     }).join('');
 
-    const majorMaterialCodes = ['NM', 'NE', 'QM', 'QE', 'RM', 'RE', 'EA', 'EB', 'EC', 'ED', 'CAT', 'CAS'];
+    const majorMaterialCodes = ['NM', 'NE', 'QM', 'QE', 'RM', 'RE', 'EA', 'EB', 'EC', 'ED', 'EBN010', 'CAT', 'CAS'];
     const mItems = majorMaterialCodes
       .filter((k) => snap.exactCodes[k])
       .map((k) => {
@@ -1242,7 +1527,7 @@
         return '<li><span class="ref-code">' + escapeHtml(k) + '</span><span>' + escapeHtml(v.category + (v.sub_category ? '（' + v.sub_category + '）' : '')) + '</span></li>';
       }).join('');
 
-    const otherCodes = ['SOI', 'DR', 'UR', 'FRM', 'TBFC', 'MF2', 'MF3', 'MFN', 'JM', 'JC', 'HSB', 'TACP'];
+    const otherCodes = ['SOI', 'DR', 'UR', 'FRM', 'QFRM', 'TBFC', 'MF2', 'MF3', 'MFN', 'MCLT', 'MCMU', 'MBLK', 'JM', 'JC', 'HSB', 'TACP'];
     const oItems = otherCodes
       .filter((k) => snap.exactCodes[k])
       .map((k) => {
@@ -1252,10 +1537,10 @@
 
     body.innerHTML =
       '<div class="ref-grid">' +
-        '<div><strong>構造種別（防耐火・貫通部）</strong><ul class="ref-list">' + sItems + '</ul></div>' +
+        '<div><strong>構造種別・防火設備（防耐火・貫通部・遮熱）</strong><ul class="ref-list">' + sItems + '</ul></div>' +
         '<div><strong>部位コード（耐力・非耐力）</strong><ul class="ref-list">' + pItems + '</ul></div>' +
         '<div><strong>防火材料・防火設備</strong><ul class="ref-list">' + mItems + '</ul></div>' +
-        '<div><strong>遮音・屋根・構造・シックハウス</strong><ul class="ref-list">' + oItems + '</ul></div>' +
+        '<div><strong>遮音・屋根・構造・指定建築材料</strong><ul class="ref-list">' + oItems + '</ul></div>' +
       '</div>';
   }
 
@@ -1392,7 +1677,7 @@
     const progFill = $('batch-progress-fill');
     const runBtn = $('btn-batch-run');
 
-    if (toLoad.length > 0) {
+    if (toLoad.length > 0 && appState.manifest) {
       if (runBtn) runBtn.disabled = true;
       if (progBox) progBox.classList.remove('hidden');
       if (progText) progText.textContent = '照合対象カテゴリ（' + toLoad.length + '件）を読み込み中…';
@@ -1400,9 +1685,10 @@
       if (progFill) progFill.style.width = '0%';
 
       try {
-        await loadCategoriesBatch(toLoad, (done, total) => {
+        await loadCategoriesBatch(toLoad, (done, total, _rows, failedCnt) => {
           const pct = Math.round((done / total) * 100);
-          if (progText) progText.textContent = '照合対象カテゴリを読み込み中…（' + done + ' / ' + total + '）';
+          const failTxt = failedCnt > 0 ? '・失敗 ' + failedCnt + '件' : '';
+          if (progText) progText.textContent = '照合対象カテゴリを読み込み中…（' + done + ' / ' + total + failTxt + '）';
           if (progPct) progPct.textContent = pct + '%';
           if (progFill) progFill.style.width = pct + '%';
         });
@@ -1412,14 +1698,31 @@
       }
     }
 
-    // 3. Match against ledger and run context contradiction analysis
+    // 3. Match against ledger with strict UNCHECKED vs UNLISTED separation & localContext contradiction analysis
+    const batchFailedCatSet = new Set();
     const occurrences = extracted.map((item) => {
       const hits = appState.certIndex.get(item.cert_no) || [];
       const ledgerRecord = hits.length > 0 ? hits[0] : null;
-      const status = ledgerRecord
-        ? 'FOUND'
-        : (item.decoded.is_valid_format ? 'UNLISTED_VALID_FORMAT' : 'INVALID_FORMAT');
-      const alerts = Decoder.analyzeContext(item.decoded, item.lineText, ledgerRecord);
+      const candIds = findCandidateCategoryIdsForPrefix(item.prefix);
+      const failedCands = (!appState.manifest || appState.manifestLoadFailed)
+        ? ['__manifest__']
+        : candIds.filter((id) => appState.failedCatIds.has(id) || !appState.categoryCache.has(id));
+      failedCands.forEach((id) => batchFailedCatSet.add(id));
+
+      let status;
+      if (ledgerRecord) {
+        status = 'FOUND';
+      } else if (!item.decoded.is_valid_format) {
+        status = 'INVALID_FORMAT';
+      } else if (failedCands.length > 0) {
+        status = 'UNCHECKED';
+      } else {
+        status = 'UNLISTED_VALID_FORMAT';
+      }
+
+      // Pass per-candidate localContext (Review #4) so neighboring certs on the same line do not bleed context
+      const contextForAnalysis = item.localContext || item.lineText;
+      const alerts = Decoder.analyzeContext(item.decoded, contextForAnalysis, ledgerRecord);
 
       return {
         cert_no: item.cert_no,
@@ -1427,8 +1730,10 @@
         source: item.source,
         lineNo: item.lineNo,
         lineText: item.lineText,
+        localContext: contextForAnalysis,
         decoded: item.decoded,
         status: status,
+        failedCategories: failedCands.map(getCategoryDisplayName),
         ledgerRecord: ledgerRecord,
         alerts: alerts
       };
@@ -1442,6 +1747,7 @@
           cert_no: occ.cert_no,
           decoded: occ.decoded,
           status: occ.status,
+          failedCategories: occ.failedCategories.slice(),
           ledgerRecord: occ.ledgerRecord,
           count: 0,
           locations: [],
@@ -1451,7 +1757,7 @@
       }
       const g = groupMap.get(occ.cert_no);
       g.count++;
-      g.locations.push({ source: occ.source, lineNo: occ.lineNo, lineText: occ.lineText });
+      g.locations.push({ source: occ.source, lineNo: occ.lineNo, lineText: occ.lineText, localContext: occ.localContext });
       occ.alerts.forEach((a) => {
         const key = a.code + '|' + a.message;
         if (!g.alertKeys.has(key)) {
@@ -1464,19 +1770,37 @@
     appState.batchOccurrences = occurrences;
     appState.batchGrouped = Array.from(groupMap.values());
 
-    // Update KPI summary cards
+    // Update KPI summary cards (strictly separating UNCHECKED from UNLISTED)
     const uniqueFound = appState.batchGrouped.filter((g) => g.status === 'FOUND').length;
     const uniqueUnlisted = appState.batchGrouped.filter((g) => g.status === 'UNLISTED_VALID_FORMAT').length;
+    const uniqueUnchecked = appState.batchGrouped.filter((g) => g.status === 'UNCHECKED').length;
     const alertCount = occurrences.reduce((acc, o) => acc + o.alerts.length, 0);
 
     $('kpi-total').textContent = formatNumber(occurrences.length);
     $('kpi-unique-sub').textContent = 'ユニーク ' + formatNumber(appState.batchGrouped.length) + ' 番号';
     $('kpi-found').textContent = formatNumber(uniqueFound);
     $('kpi-unlisted').textContent = formatNumber(uniqueUnlisted);
+    if ($('kpi-unchecked')) $('kpi-unchecked').textContent = formatNumber(uniqueUnchecked);
     $('kpi-alerts').textContent = formatNumber(alertCount);
 
+    // Show or hide batch fetch failure banner
+    const batchFailBanner = $('batch-failed-banner');
+    const batchFailMsg = $('batch-failed-msg');
+    if (batchFailBanner && batchFailMsg) {
+      if (uniqueUnchecked > 0) {
+        const failedNames = Array.from(batchFailedCatSet).map(getCategoryDisplayName).join('、');
+        batchFailMsg.textContent =
+          '取得失敗カテゴリ：' + failedNames + '（対象 ' + uniqueUnchecked +
+          ' 番号は「台帳未照合」として扱い、「未掲載」とは区別しています）。';
+        batchFailBanner.classList.remove('hidden');
+      } else {
+        batchFailBanner.classList.add('hidden');
+      }
+    }
+
     $('batch-status-msg').textContent =
-      formatNumber(occurrences.length) + ' 件（ユニーク ' + formatNumber(appState.batchGrouped.length) + ' 番号）を解析しました。';
+      formatNumber(occurrences.length) + ' 件（ユニーク ' + formatNumber(appState.batchGrouped.length) + ' 番号' +
+      (uniqueUnchecked > 0 ? '・うち台帳未照合 ' + formatNumber(uniqueUnchecked) + ' 番号' : '') + '）を解析しました。';
     $('batch-results-section').classList.remove('hidden');
 
     renderBatchTable();
@@ -1488,11 +1812,13 @@
     const filter = appState.batchFilter;
     const dedupe = appState.batchDedupe;
     const seinokyoUrl = Decoder.getSeinokyoUrl();
+    const cutoffLabel = getCutoffLabel();
 
     const rows = dedupe ? appState.batchGrouped : appState.batchOccurrences;
     const filtered = rows.filter((item) => {
       if (filter === 'found') return item.status === 'FOUND';
       if (filter === 'unlisted') return item.status === 'UNLISTED_VALID_FORMAT';
+      if (filter === 'unchecked') return item.status === 'UNCHECKED';
       if (filter === 'alert') return item.alerts && item.alerts.length > 0;
       return true;
     });
@@ -1513,6 +1839,8 @@
         statusHtml = '<span class="badge badge--emerald">✓ 台帳一致</span>';
       } else if (item.status === 'UNLISTED_VALID_FORMAT') {
         statusHtml = '<span class="badge badge--amber">▲ 未掲載・要確認</span>';
+      } else if (item.status === 'UNCHECKED') {
+        statusHtml = '<span class="badge badge--unchecked">? 台帳未照合</span>';
       } else {
         statusHtml = '<span class="badge badge--rose">✕ 形式異常</span>';
       }
@@ -1537,7 +1865,7 @@
         '<div><strong>' + escapeHtml(decParts[0] || '—') + '</strong></div>' +
         (decParts.length > 1 ? '<div style="font-size:0.78rem; color:var(--text-muted);">' + escapeHtml(decParts.slice(1).join(' / ')) + '</div>' : '');
 
-      // Ledger info or seinokyo link
+      // Ledger info, UNCHECKED notice, or seinokyo link
       let ledgerHtml = '';
       if (item.ledgerRecord) {
         const rec = item.ledgerRecord;
@@ -1545,9 +1873,19 @@
           '<div><strong>' + escapeHtml(rec.applicant || '—') + '</strong></div>' +
           '<div class="cell-title" style="font-size:0.8rem;" title="' + escapeHtml(rec.title) + '">' + escapeHtml(rec.title || '—') + '</div>' +
           '<div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">' + escapeHtml(rec.date_jp || rec.date || '') + ' / ' + escapeHtml(rec.category_name || '') + '</div>';
+      } else if (item.status === 'UNCHECKED') {
+        const failNames = (item.failedCategories && item.failedCategories.length > 0)
+          ? item.failedCategories.join('、')
+          : '対象カテゴリ';
+        ledgerHtml =
+          '<div style="font-size:0.8rem; color:var(--violet-text);">台帳未照合（読込失敗：' + escapeHtml(failNames) + '／<strong>未掲載ではありません</strong>）</div>' +
+          '<div style="margin-top:5px; display:flex; gap:6px; flex-wrap:wrap;">' +
+            '<button type="button" class="btn btn--sm btn--rose batch-inline-retry-btn">再試行</button>' +
+            '<a class="btn btn--sm" href="' + escapeHtml(seinokyoUrl) + '" target="_blank" rel="noopener noreferrer">性能協DB ↗</a>' +
+          '</div>';
       } else if (item.status === 'UNLISTED_VALID_FORMAT') {
         ledgerHtml =
-          '<div style="font-size:0.8rem; color:var(--amber-text);">R5.4.30帳簿未掲載（令和5年5月以降の新規認定または誤記の要確認）</div>' +
+          '<div style="font-size:0.8rem; color:var(--amber-text);">' + escapeHtml(cutoffLabel) + '帳簿未掲載（基準日以降の新規認定または誤記の要確認）</div>' +
           '<div style="margin-top:5px;"><a class="btn btn--sm btn--amber" href="' + escapeHtml(seinokyoUrl) + '" target="_blank" rel="noopener noreferrer">性能協DBで確認 ↗</a></div>';
       } else {
         ledgerHtml =
@@ -1601,10 +1939,12 @@
   }
 
   function buildBatchMarkdownReport() {
+    const cutoffLabel = getCutoffLabel();
     const totalOcc = appState.batchOccurrences.length;
     const uniqueCount = appState.batchGrouped.length;
     const foundCount = appState.batchGrouped.filter((g) => g.status === 'FOUND').length;
     const unlistedCount = appState.batchGrouped.filter((g) => g.status === 'UNLISTED_VALID_FORMAT').length;
+    const uncheckedCount = appState.batchGrouped.filter((g) => g.status === 'UNCHECKED').length;
     const invalidCount = appState.batchGrouped.filter((g) => g.status === 'INVALID_FORMAT').length;
     const alertTotal = appState.batchOccurrences.reduce((a, o) => a + o.alerts.length, 0);
 
@@ -1612,43 +1952,55 @@
       '# 大臣認定番号 一括スクリーニングレポート',
       '',
       '- 生成ツール: `daijin-nintei-db`（ブラウザ完全ローカル処理）',
-      '- 照合帳簿基準日: 令和5年4月30日（国土交通省公開帳簿・PDL1.0加工）',
+      '- 照合帳簿基準日: ' + cutoffLabel + '（' + getDataPeriodLabel() + '・PDL1.0加工）',
       '- 検出総数: **' + totalOcc + '件**（ユニーク **' + uniqueCount + '番号**）',
-      '- R5.4台帳一致: **' + foundCount + '** ／ 未掲載・要確認（R5.5以降新規等）: **' + unlistedCount + '** ／ 形式異常: **' + invalidCount + '** ／ 注意アラート: **' + alertTotal + '件**',
+      '- 台帳一致: **' + foundCount + '** ／ 未掲載・要確認（基準日以降新規等）: **' + unlistedCount + '** ／ 台帳未照合（読込失敗）: **' + uncheckedCount + '** ／ 形式異常: **' + invalidCount + '** ／ 注意アラート: **' + alertTotal + '件**',
       '',
-      '| 状態 | 認定番号 | 記号解析 | R5.4帳簿 申請者・名称 | 注意アラート | 出現箇所 |',
+      '| 状態 | 認定番号 | 記号解析 | 公開帳簿 申請者・名称 / 照合備考 | 注意アラート | 出現箇所 |',
       '|---|---|---|---|---|---|'
     ];
 
     const escMd = (s) => String(s || '—').replace(/\|/g, '｜').replace(/\r?\n/g, ' ');
 
     appState.batchGrouped.forEach((g) => {
-      const st = g.status === 'FOUND' ? '台帳一致' : (g.status === 'UNLISTED_VALID_FORMAT' ? '未掲載・要確認' : '形式異常');
+      let st;
+      if (g.status === 'FOUND') st = '台帳一致';
+      else if (g.status === 'UNLISTED_VALID_FORMAT') st = '未掲載・要確認';
+      else if (g.status === 'UNCHECKED') st = '台帳未照合（読込失敗）';
+      else st = '形式異常';
+
       const decStr = [g.decoded.structure_type || g.decoded.category, g.decoded.duration_min ? g.decoded.duration_min + '分' : null, g.decoded.part].filter(Boolean).join(' / ');
-      const ledgerStr = g.ledgerRecord
-        ? (g.ledgerRecord.applicant + '「' + g.ledgerRecord.title + '」(' + (g.ledgerRecord.date_jp || g.ledgerRecord.date) + ')')
-        : 'R5.4帳簿未掲載（公式DB要確認）';
+      let ledgerStr;
+      if (g.ledgerRecord) {
+        ledgerStr = g.ledgerRecord.applicant + '「' + g.ledgerRecord.title + '」(' + (g.ledgerRecord.date_jp || g.ledgerRecord.date) + ')';
+      } else if (g.status === 'UNCHECKED') {
+        const failNames = (g.failedCategories && g.failedCategories.length) ? g.failedCategories.join('・') : '対象カテゴリ';
+        ledgerStr = '対象カテゴリ読込失敗（' + failNames + '）のため未照合（未掲載ではありません）';
+      } else if (g.status === 'UNLISTED_VALID_FORMAT') {
+        ledgerStr = cutoffLabel + '帳簿未掲載（公式DB要確認）';
+      } else {
+        ledgerStr = '記号形式不一致（公式DB要確認）';
+      }
       const alertStr = g.alerts.length > 0 ? g.alerts.map((a) => a.message).join('； ') : '—';
       const locStr = g.locations.map((l) => l.source + ':' + l.lineNo).join(', ');
       lines.push('| ' + [st, '`' + g.cert_no + '`', decStr, ledgerStr, alertStr, locStr].map(escMd).join(' | ') + ' |');
     });
 
     lines.push('');
-    lines.push('> **免責事項**: 本レポートは令和5年4月30日時点の国交省公開帳簿に基づく機械的スクリーニング補助結果です。令和5年5月以降の新規認定・取消・変更および別添仕様は含まれません。最終的な法適合判断は、必ず有資格者が[一般社団法人 建築性能基準推進協会（性能協）大臣認定等検索システム](' + Decoder.getSeinokyoUrl() + ')および認定書原本にて確認してください。');
+    lines.push('> **免責事項**: 本レポートは' + cutoffLabel + '時点の国交省公開帳簿に基づく機械的スクリーニング補助結果です。基準日以降の新規認定・取消・変更および別添仕様は含まれません。最終的な法適合判断は、必ず有資格者が[一般社団法人 建築性能基準推進協会（性能協）大臣認定等検索システム](' + Decoder.getSeinokyoUrl() + ')および認定書原本にて確認してください。');
     return lines.join('\n');
   }
 
   function insertBatchSampleText() {
     const sample = [
       '【特記仕様書・仕上表 抜粋サンプル】',
-      '1. 外壁（耐力壁・45分準耐火構造）：QF045BE-1232',
-      '2. 外壁（60分耐火・耐力壁）：QF045BE-1232  ※耐火時間の記載齟齬テスト',
-      '3. 外壁（耐力壁・60分耐火構造）：FP060NE-0001  ※耐力壁と非耐力壁記号の齟齬テスト',
-      '4. 内装仕上げ（不燃ボード）：NM-8585',
-      '5. 界壁（遮音構造）：SOI-0160',
-      '6. 外壁開口部（防火設備）：EB-0001',
-      '7. 新規採用外壁（令和6年取得想定・未掲載テスト）：QF045BE-9999',
-      '8. 誤記テスト（未定義部位記号）：FP060XX-0012'
+      '1. 外壁 60分 QF045BE-1232 ／ 間仕切壁 45分 QF045BP-0001  ※1行複数番号の文脈切り分けテスト',
+      '2. 外壁（耐力壁・60分耐火構造）：FP060NE-0001  ※耐力壁と非耐力壁記号の齟齬テスト',
+      '3. 内装仕上げ（不燃ボード）：NM-8585',
+      '4. 界壁（遮音構造）：SOI-0160',
+      '5. 小規模竪穴区画（防火設備）：ED-0001 ／ 遮熱防火設備（90分）：EH090-0001',
+      '6. 基準日以降の新規採用想定（未掲載テスト）：QF045BE-9999',
+      '7. 誤記テスト（未定義部位記号）：FP060XX-0012'
     ].join('\n');
     $('batch-textarea').value = sample;
     showToast('サンプルテキストを挿入しました。「スクリーニング実行」をクリックしてください');
@@ -1694,6 +2046,14 @@
     if ($('btn-batch-run')) {
       $('btn-batch-run').addEventListener('click', runBatchScreening);
     }
+    if ($('btn-batch-retry')) {
+      $('btn-batch-retry').addEventListener('click', async function () {
+        if (appState.manifestLoadFailed || !appState.manifest) {
+          await initData();
+        }
+        runBatchScreening();
+      });
+    }
     if ($('btn-batch-clear')) {
       $('btn-batch-clear').addEventListener('click', function () {
         $('batch-textarea').value = '';
@@ -1702,6 +2062,7 @@
         appState.batchGrouped = [];
         renderBatchFileChips();
         $('batch-results-section').classList.add('hidden');
+        if ($('batch-failed-banner')) $('batch-failed-banner').classList.add('hidden');
         $('batch-status-msg').textContent = '';
       });
     }
@@ -1722,9 +2083,16 @@
       });
     }
 
-    // Clicking a cert pill in batch table opens Detail Modal if matched, else opens Decoder
+    // Clicking a cert pill opens Detail Modal if matched, else Decoder; inline retry button retries screening
     if ($('batch-tbody')) {
-      $('batch-tbody').addEventListener('click', function (e) {
+      $('batch-tbody').addEventListener('click', async function (e) {
+        if (e.target.closest('.batch-inline-retry-btn')) {
+          if (appState.manifestLoadFailed || !appState.manifest) {
+            await initData();
+          }
+          runBatchScreening();
+          return;
+        }
         const btn = e.target.closest('.batch-cert-btn');
         if (!btn) return;
         const certNo = btn.dataset.cert;
@@ -1741,25 +2109,36 @@
 
     if ($('btn-batch-csv')) {
       $('btn-batch-csv').addEventListener('click', function () {
-        const rows = appState.batchOccurrences.map((o) => [
-          o.status,
-          o.cert_no,
-          o.decoded.structure_type || o.decoded.category || '',
-          o.decoded.duration_min != null ? o.decoded.duration_min : '',
-          o.decoded.part || '',
-          o.ledgerRecord ? o.ledgerRecord.applicant : '',
-          o.ledgerRecord ? o.ledgerRecord.title : '',
-          o.ledgerRecord ? (o.ledgerRecord.date_jp || o.ledgerRecord.date) : '',
-          o.alerts.map((a) => a.message).join(' / '),
-          o.source + ':' + o.lineNo,
-          o.lineText
-        ]);
+        const hasUnchecked = appState.batchOccurrences.some((o) => o.status === 'UNCHECKED');
+        const rows = appState.batchOccurrences.map((o) => {
+          const checkNote = o.status === 'UNCHECKED'
+            ? '台帳未照合（読込失敗：' + ((o.failedCategories && o.failedCategories.join('・')) || '対象カテゴリ') + '）'
+            : (o.status === 'UNLISTED_VALID_FORMAT' ? getCutoffLabel() + '帳簿未掲載' : (o.status === 'FOUND' ? '台帳一致' : '形式異常'));
+          return [
+            o.status,
+            checkNote,
+            o.cert_no,
+            o.decoded.structure_type || o.decoded.category || '',
+            o.decoded.duration_min != null ? o.decoded.duration_min : '',
+            o.decoded.part || '',
+            o.ledgerRecord ? o.ledgerRecord.applicant : '',
+            o.ledgerRecord ? o.ledgerRecord.title : '',
+            o.ledgerRecord ? (o.ledgerRecord.date_jp || o.ledgerRecord.date) : '',
+            o.alerts.map((a) => a.message).join(' / '),
+            o.source + ':' + o.lineNo,
+            o.lineText
+          ];
+        });
         downloadCsv(
-          'daijin-nintei-screening.csv',
-          ['照合状態', '認定番号', '構造種別', '耐火時間(分)', '部位', 'R5.4申請者', 'R5.4構造方法名', 'R5.4認定日', '注意アラート', '出現箇所', '該当行テキスト'],
+          hasUnchecked ? 'daijin-nintei-screening-with-unchecked.csv' : 'daijin-nintei-screening.csv',
+          ['照合状態', '照合備考', '認定番号', '構造種別', '耐火時間(分)', '部位', '公開帳簿申請者', '公開帳簿構造方法名', '公開帳簿認定日', '注意アラート', '出現箇所', '該当行テキスト'],
           rows
         );
-        showToast('スクリーニング結果をCSV出力しました');
+        if (hasUnchecked) {
+          showToast('⚠ 台帳未照合（読込失敗）の項目を含むスクリーニング結果をCSV出力しました');
+        } else {
+          showToast('スクリーニング結果をCSV出力しました');
+        }
       });
     }
 

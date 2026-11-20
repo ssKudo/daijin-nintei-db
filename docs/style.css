@@ -51,6 +51,11 @@
   --cyan-text: #155e75;
   --cyan-border: #a5f3fc;
 
+  --violet-50: #f5f3ff;
+  --violet-600: #7c3aed;
+  --violet-text: #5b21b6;
+  --violet-border: #ddd6fe;
+
   --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
   --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.07), 0 1px 3px rgba(15, 23, 42, 0.04);
   --shadow-lg: 0 20px 40px rgba(15, 23, 42, 0.16), 0 4px 12px rgba(15, 23, 42, 0.08);
@@ -106,6 +111,11 @@
   --cyan-50: rgba(6, 182, 212, 0.14);
   --cyan-text: #67e8f9;
   --cyan-border: rgba(6, 182, 212, 0.35);
+
+  --violet-50: rgba(139, 92, 246, 0.16);
+  --violet-600: #a78bfa;
+  --violet-text: #c4b5fd;
+  --violet-border: rgba(139, 92, 246, 0.38);
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
@@ -490,6 +500,16 @@ button, input, select, textarea {
   background: var(--amber-100);
 }
 
+.btn--rose {
+  background: var(--rose-50);
+  border-color: var(--rose-border);
+  color: var(--rose-text);
+}
+
+.btn--rose:hover:not(:disabled) {
+  background: var(--rose-100);
+}
+
 .btn--sm {
   padding: 5px 10px;
   font-size: 0.8rem;
@@ -830,6 +850,12 @@ button, input, select, textarea {
   border-color: var(--rose-border);
 }
 
+.badge--unchecked {
+  background: var(--violet-50);
+  color: var(--violet-text);
+  border-color: var(--violet-border);
+}
+
 /* Pagination */
 .pagination {
   display: flex;
@@ -1059,6 +1085,12 @@ button, input, select, textarea {
   color: var(--rose-text);
 }
 
+.status-banner--unchecked {
+  background: var(--violet-50);
+  border-color: var(--violet-border);
+  color: var(--violet-text);
+}
+
 .status-banner-title {
   font-weight: 700;
   font-size: 0.94rem;
@@ -1235,7 +1267,7 @@ button, input, select, textarea {
 /* Summary KPI Cards */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  grid-template-columns: repeat(5, minmax(140px, 1fr));
   gap: 12px;
   margin-bottom: 16px;
 }
@@ -1273,6 +1305,9 @@ button, input, select, textarea {
 
 .kpi-card--unlisted { border-left: 4px solid var(--amber-500); }
 .kpi-card--unlisted .kpi-value { color: var(--amber-text); }
+
+.kpi-card--unchecked { border-left: 4px solid var(--violet-600); }
+.kpi-card--unchecked .kpi-value { color: var(--violet-text); }
 
 .kpi-card--alert { border-left: 4px solid var(--rose-600); }
 .kpi-card--alert .kpi-value { color: var(--rose-text); }

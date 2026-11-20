@@ -521,6 +521,19 @@ def write_category_outputs(
     )
 
 
+def extract_ledger_date_period(pdf_path: Path) -> tuple[str, str]:
+    """Extract (start_jp, end_jp) from page 1 header '認定日：...～...'."""
+    doc = pymupdf.open(pdf_path)
+    try:
+        p1_txt = doc[0].get_text("text")
+    finally:
+        doc.close()
+    m = re.search(r"認定日[：:]\s*([^\s～~〜\r\n]+)\s*[～~〜]\s*([^\s\r\n]+)", p1_txt)
+    if m:
+        return m.group(1).strip(), m.group(2).strip()
+    return "", ""
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Parse all 42 MLIT ledger PDFs into JSON/CSV.")
     ap.add_argument("--cache-dir", type=Path, default=DEFAULT_CACHE_DIR)
@@ -550,6 +563,8 @@ def main() -> int:
     all_dates: list[str] = []
     all_prefixes: Counter[str] = Counter()
     all_anomalies: list[str] = []
+    period_starts: list[tuple[str, str]] = []
+    period_ends: list[tuple[str, str]] = []
     max_file_bytes = 0
 
     print(f"Parsing {len(sources['categories'])} categories from {args.cache_dir}...\n")
@@ -566,6 +581,12 @@ def main() -> int:
             pdf_path = args.cache_dir / pdf_meta["filename"]
             if not pdf_path.exists():
                 raise FileNotFoundError(f"Missing cached PDF: {pdf_path}")
+
+            p_start, p_end = extract_ledger_date_period(pdf_path)
+            if p_start:
+                period_starts.append((parse_jp_date_to_iso(p_start), p_start))
+            if p_end:
+                period_ends.append((parse_jp_date_to_iso(p_end), p_end))
 
             recs, st = parse_ledger_pdf(
                 pdf_path,
@@ -633,13 +654,24 @@ def main() -> int:
     min_date = min(all_dates) if all_dates else ""
     max_date = max(all_dates) if all_dates else ""
 
+    # Determine official ledger period dynamically from PDF page-1 headers
+    valid_starts = [p for p in period_starts if p[0]]
+    valid_ends = [p for p in period_ends if p[0]]
+    if valid_starts and valid_ends:
+        start_jp = min(valid_starts, key=lambda x: x[0])[1]
+        end_jp = max(valid_ends, key=lambda x: x[0])[1]
+        data_period = f"{start_jp}～{end_jp}"
+    else:
+        data_period = f"{min_date}～{max_date}"
+
     manifest = {
         "schema_version": "1.0.0",
         "source_name": "建築基準法に基づく構造方法等の認定に係る帳簿等（国土交通省）",
         "source_url": sources["source_url"],
         "source_license": "公共データ利用規約（第1.0版）（PDL1.0）",
-        "data_period": "平成12年04月01日～令和5年04月30日",
+        "data_period": data_period,
         "date_range": {"min": min_date, "max": max_date},
+        "page_last_updated": sources.get("page_last_updated", ""),
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "total_records": total_records,
         "categories": manifest_categories,

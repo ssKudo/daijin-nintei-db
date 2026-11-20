@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "daijin-nintei-db"
-version = "0.1.0"
+version = "0.2.0"
 description = "Zero-hallucination decoder, local search engine, and batch screener for Japanese MLIT Minister Certification numbers (大臣認定番号)"
 readme = "README.md"
 license = {text = "MIT"}
@@ -47,6 +47,9 @@ daijin-nintei = "daijin_nintei.cli:main"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["daijin_nintei*"]
+
+[tool.setuptools.package-data]
+daijin_nintei = ["bundled_code_rules.json"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

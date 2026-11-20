@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>大臣認定データベース｜daijin-nintei-db（建築基準法 構造方法等認定 検索・デコーダ・一括スクリーニング）</title>
-  <meta name="description" content="国土交通省公開帳簿（令和5年4月30日基準・PDL1.0）に基づく建築基準法・大臣認定データベースの静的Webアプリ。認定番号検索、最新番号対応デコーダ、完全ローカル図書一括スクリーニングを提供。">
+  <meta name="description" content="国土交通省公開帳簿（令和8年9月30日版・PDL1.0）に基づく建築基準法・大臣認定データベースの静的Webアプリ。全21区分横断検索、最新番号対応デコーダ、完全ローカル図書一括スクリーニングを提供。">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%234338ca'/%3E%3Cpath d='M8 24V11l8-5 8 5v13M13 24v-6h6v6M12 13h2v2h-2zm6 0h2v2h-2z' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="./style.css">
 </head>
@@ -36,7 +36,7 @@
           <span>読み込み中…</span>
         </span>
         <span id="badge-data-date" class="meta-badge meta-badge--date">
-          データ基準日：令和5年4月30日（国交省公開帳簿）
+          データ基準日：読み込み中…
         </span>
         <button id="btn-theme-toggle" type="button" class="icon-btn" aria-label="テーマ切替" title="ライト／ダークテーマ切替">
           <span id="theme-icon" aria-hidden="true">🌙</span>
@@ -136,13 +136,20 @@
           <div class="scope-bar">
             <div class="scope-actions">
               <span id="loaded-status-badge" class="badge badge--indigo">全区分データ読込準備中…</span>
+              <button id="btn-retry-failed" type="button" class="btn btn--sm btn--rose hidden">失敗区分を再試行</button>
               <button id="btn-reset-to-all" type="button" class="btn btn--sm hidden">すべて（全区分）に戻す</button>
             </div>
             <div class="scope-actions">
               <a class="btn btn--sm btn--amber" href="https://www.seinokyo.jp/ninteidb/pub/" target="_blank" rel="noopener noreferrer">
-                令和5年5月以降の最新確認（性能協DB ↗）
+                最新の認定確認（性能協DB ↗）
               </a>
             </div>
+          </div>
+
+          <!-- Failed category warning banner (hidden unless one or more category JSONs fail) -->
+          <div id="search-failed-banner" class="status-banner status-banner--invalid hidden" style="margin-top: 12px; margin-bottom: 0;" role="alert">
+            <div class="status-banner-title">⚠ 一部区分のデータ読み込みに失敗しました（検索結果・CSV出力は不完全です）</div>
+            <p id="search-failed-msg"></p>
           </div>
 
           <!-- Progress bar for batch/all category loading -->
@@ -212,7 +219,7 @@
             <div>
               <h2 class="card-title">大臣認定番号 シンボルデコーダ</h2>
               <p class="card-desc">
-                国交省の付番規則に基づき、記号から構造種別・耐火時間・対象部位・耐力区分・根拠条文を即時分解します。<strong>令和5年5月以降の最新認定番号（2024〜2026年等）</strong>も記号解析が可能です。
+                国交省の付番規則に基づき、記号から構造種別・耐火時間・対象部位・耐力区分・根拠条文を即時分解します。<strong>公開帳簿の基準日以降に交付された最新認定番号</strong>も記号解析が可能です。
               </p>
             </div>
           </div>
@@ -230,7 +237,8 @@
             <button type="button" class="chip-btn" data-sample="FP060NE-0001"><code>FP060NE-0001</code> <span>60分耐火非耐力外壁</span></button>
             <button type="button" class="chip-btn" data-sample="NM-8585"><code>NM-8585</code> <span>不燃材料</span></button>
             <button type="button" class="chip-btn" data-sample="SOI-0160"><code>SOI-0160</code> <span>界壁遮音構造</span></button>
-            <button type="button" class="chip-btn" data-sample="EB-0001"><code>EB-0001</code> <span>外壁防火設備</span></button>
+            <button type="button" class="chip-btn" data-sample="ED-0001"><code>ED-0001</code> <span>小規模竪穴区画</span></button>
+            <button type="button" class="chip-btn" data-sample="EH090-0001"><code>EH090-0001</code> <span>90分遮熱防火設備</span></button>
             <button type="button" class="chip-btn" data-sample="PS060WL-1239"><code>PS060WL-1239</code> <span>区画貫通部</span></button>
             <button type="button" class="chip-btn" data-sample="QF045BE-9999"><code>QF045BE-9999</code> <span>未掲載・最新想定</span></button>
           </div>
@@ -264,7 +272,7 @@
             <!-- Right: Ledger Lookup Result -->
             <div class="card">
               <div class="card-header">
-                <h3 class="card-title">R5.4.30 国交省公開帳簿 照合結果</h3>
+                <h3 id="decoder-ledger-heading" class="card-title">国交省公開帳簿 照合結果</h3>
               </div>
               <div id="decoder-ledger-result">
                 <p class="card-desc">照合中…</p>
@@ -302,7 +310,7 @@
             <div>
               <h2 class="card-title">図書・仕様書 大臣認定番号 一括スクリーニング</h2>
               <p class="card-desc">
-                テキスト中の認定番号を自動抽出し、記号デコード・R5.4公開帳簿との照合・周辺記載（耐火時間／耐力壁／部位等）との整合性アラートを一括チェックします。
+                テキスト中の認定番号を自動抽出し、記号デコード・国交省公開帳簿との照合・周辺記載（耐火時間／耐力壁／部位等）との整合性アラートを一括チェックします。
               </p>
             </div>
             <button id="btn-batch-sample" type="button" class="btn btn--sm">サンプルテキストを挿入</button>
@@ -346,6 +354,13 @@
 
         <!-- Batch Results Area -->
         <div id="batch-results-section" class="hidden">
+          <!-- Batch fetch failure banner -->
+          <div id="batch-failed-banner" class="status-banner status-banner--unchecked hidden" role="alert">
+            <div class="status-banner-title">⚠ 一部カテゴリのデータ読み込みに失敗したため「台帳未照合」の項目があります</div>
+            <p id="batch-failed-msg" style="margin-bottom: 10px;"></p>
+            <button id="btn-batch-retry" type="button" class="btn btn--sm btn--primary">失敗区分を再試行して再スクリーニング</button>
+          </div>
+
           <!-- KPI Summary Cards -->
           <div class="kpi-grid">
             <div class="kpi-card kpi-card--total">
@@ -354,14 +369,19 @@
               <div id="kpi-unique-sub" class="kpi-sub">ユニーク 0 番号</div>
             </div>
             <div class="kpi-card kpi-card--found">
-              <div class="kpi-label">R5.4台帳一致</div>
+              <div class="kpi-label">台帳一致</div>
               <div id="kpi-found" class="kpi-value">0</div>
               <div class="kpi-sub">国交省公開帳簿に掲載あり</div>
             </div>
             <div class="kpi-card kpi-card--unlisted">
               <div class="kpi-label">未掲載・要確認</div>
               <div id="kpi-unlisted" class="kpi-value">0</div>
-              <div class="kpi-sub">R5.5以降の新規認定または誤記確認</div>
+              <div class="kpi-sub">基準日以降の新規認定または誤記確認</div>
+            </div>
+            <div class="kpi-card kpi-card--unchecked">
+              <div class="kpi-label">台帳未照合</div>
+              <div id="kpi-unchecked" class="kpi-value">0</div>
+              <div class="kpi-sub">読込失敗のため照合不可（未掲載ではない）</div>
             </div>
             <div class="kpi-card kpi-card--alert">
               <div class="kpi-label">注意アラート</div>
@@ -374,8 +394,9 @@
             <div class="results-toolbar">
               <div class="filter-pills" role="group" aria-label="結果フィルタ">
                 <button type="button" class="filter-pill is-active" data-batch-filter="all">すべて</button>
-                <button type="button" class="filter-pill" data-batch-filter="found">R5.4台帳一致</button>
+                <button type="button" class="filter-pill" data-batch-filter="found">台帳一致</button>
                 <button type="button" class="filter-pill" data-batch-filter="unlisted">未掲載・要確認</button>
+                <button type="button" class="filter-pill" data-batch-filter="unchecked">台帳未照合</button>
                 <button type="button" class="filter-pill" data-batch-filter="alert">注意アラートあり</button>
               </div>
               <div class="toolbar-right">
@@ -392,10 +413,10 @@
               <table class="data-table">
                 <thead>
                   <tr>
-                    <th style="width: 120px;">照合状態</th>
+                    <th style="width: 128px;">照合状態</th>
                     <th style="width: 155px;">認定番号</th>
                     <th style="width: 195px;">記号デコード結果</th>
-                    <th>R5.4帳簿情報 / 公式確認</th>
+                    <th>公開帳簿情報 / 照合・公式確認</th>
                     <th style="width: 240px;">注意アラート・整合性ヒント</th>
                     <th style="width: 190px;">出現箇所</th>
                   </tr>
@@ -442,7 +463,7 @@
       <div>
         <h3 class="footer-heading">出典・ライセンス表示（PDL1.0準拠）</h3>
         <p class="footer-text">
-          出典：「<a href="https://www.mlit.go.jp/jutakukentiku/build/jutakukentiku_house_tk_000165.html" target="_blank" rel="noopener noreferrer">建築基準法に基づく構造方法等の認定に係る帳簿等</a>」（国土交通省）を加工して作成（データ基準日：令和5年4月30日）。
+          出典：「<a id="footer-source-link" href="https://www.mlit.go.jp/jutakukentiku/build/jutakukentiku_house_tk_000042.html" target="_blank" rel="noopener noreferrer">建築基準法に基づく構造方法等の認定に係る帳簿等</a>」（国土交通省）を加工して作成（データ基準日：<span id="footer-data-date">令和8年9月30日</span>）。
           本サイトおよび収録データは国土交通省その他の公的機関が作成・監修したものではなく、<strong>非公式のオープンデータプロジェクト</strong>です。
         </p>
         <p class="footer-text" style="margin-bottom: 0;">
@@ -453,7 +474,7 @@
       <div class="footer-disclaimer">
         <h3 class="footer-heading">重要な制約と免責事項</h3>
         <p class="footer-text" style="margin-bottom: 0;">
-          本ツールの収録帳簿は<strong>令和5年4月30日時点</strong>の公開PDFに基づくため、令和5年5月以降の新規認定・変更・取消は含まれません。また、各認定の別添（詳細な仕様・構成・施工条件）は収録していません。建築確認申請や法適合判断にあたっては、必ず有資格者が<a href="https://www.seinokyo.jp/ninteidb/pub/" target="_blank" rel="noopener noreferrer">一般社団法人 建築性能基準推進協会（性能協）大臣認定等検索システム</a>および認定書原本（別添含む）で最新情報を確認してください。
+          本ツールの収録帳簿は<strong id="footer-disclaimer-date">令和8年9月30日時点</strong>の公開PDFに基づくため、基準日以降の新規認定・変更・取消は含まれません。また、各認定の別添（詳細な仕様・構成・施工条件）は収録していません。建築確認申請や法適合判断にあたっては、必ず有資格者が<a href="https://www.seinokyo.jp/ninteidb/pub/" target="_blank" rel="noopener noreferrer">一般社団法人 建築性能基準推進協会（性能協）大臣認定等検索システム</a>および認定書原本（別添含む）で最新情報を確認してください。
         </p>
       </div>
     </div>

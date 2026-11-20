@@ -57,6 +57,30 @@
       en: 'Flame Insulation Roof / Element',
       law_article: '建築基準法施行令第109条の3第一号・第113条第1項第三号',
       description: '防火壁を設けた部分の屋根の構造等'
+    },
+    FPLH: {
+      ja: '耐火構造（長時間遮熱性等）',
+      en: 'Long-term Heat-Insulating Fireproof Construction',
+      law_article: '建築基準法第2条第七号・施行令第107条等',
+      description: '長時間遮熱性等の追加性能を有する耐火構造'
+    },
+    QPEP: {
+      ja: '準延焼防止構造・準防火構造等',
+      en: 'Quasi Fire-Preventive / Flame-Spread-Preventive Construction',
+      law_article: '建築基準法施行令第109条の2の2・第109条の6等',
+      description: '外壁等の延焼防止性能を有する準防火・準延焼防止構造'
+    },
+    EH: {
+      ja: '火熱遮断壁等の防火設備（遮熱）',
+      en: 'Heat-Insulating Fire Preventive Equipment',
+      law_article: '建築基準法施行令第108条の3第1号・施行令第109条の8',
+      description: '火熱遮断壁等の開口部に設ける遮熱性能を有する防火設備'
+    },
+    EQ: {
+      ja: '防火設備（準耐火構造・遮炎性能等）',
+      en: 'Quasi-Fireproof / Fire Preventive Equipment',
+      law_article: '建築基準法施行令第109条の2・第112条等',
+      description: '所定時間の遮炎性能等を有する防火設備'
     }
   };
 
@@ -91,8 +115,11 @@
     EB: { group: '防火設備', category: '防火設備（遮炎性能）', sub_category: '耐火建築物等の外壁開口部（20分遮炎）', duration_min: 20, part: '外壁開口部（防火設備）', load_bearing: null, law_article: '建築基準法第2条第九号の二ロ・施行令第109条の2', description: '耐火建築物等の延焼のおそれのある部分の外壁開口部に設ける20分遮炎防火設備' },
     EC: { group: '防火設備', category: '防火設備（準遮炎性能）', sub_category: '防火地域等の外壁開口部（20分準遮炎）', duration_min: 20, part: '外壁開口部（防火設備）', load_bearing: null, law_article: '建築基準法第61条・施行令第136条の2の3（旧法第64条）', description: '防火地域・準防火地域内の外壁開口部に設ける20分準遮炎防火設備' },
     EBN: { group: '防火設備', category: '防火設備（両面遮炎・延焼防止等）', sub_category: '外壁開口部等', duration_min: 20, part: '開口部（防火設備）', load_bearing: null, law_article: '建築基準法第2条第九号の二ロ・施行令第109条の2関連', description: '遮炎性能に係る防火設備（新区分・個別仕様は認定書原本を確認）' },
+    EBN010: { group: '防火設備', category: '防火設備（遮炎性能）', sub_category: '10分遮炎性能を有する防火設備等', duration_min: 10, part: '開口部（防火設備）', load_bearing: null, law_article: '建築基準法第2条第九号の二ロ・施行令第109条の2関連', description: '防火設備（遮炎性能・10分間）' },
+    EBN020: { group: '防火設備', category: '防火設備（遮炎性能）', sub_category: '20分遮炎性能を有する防火設備等', duration_min: 20, part: '開口部（防火設備）', load_bearing: null, law_article: '建築基準法第2条第九号の二ロ・施行令第109条の2関連', description: '防火設備（遮炎性能・20分間）' },
     ECN: { group: '防火設備', category: '防火設備（準遮炎・延焼防止等）', sub_category: '外壁開口部等', duration_min: 20, part: '開口部（防火設備）', load_bearing: null, law_article: '建築基準法施行令第136条の2の3関連', description: '準遮炎性能に係る防火設備（新区分・個別仕様は認定書原本を確認）' },
-    ED: { group: '防火設備', category: '防火ダンパー等', sub_category: '風道貫通部', duration_min: null, part: '風道・ダクト', load_bearing: null, law_article: '建築基準法施行令第112条第21項（旧第16項）', description: '界壁・防火区画等を貫通する風道に設ける防火設備（防火ダンパー等）' },
+    ECN020: { group: '防火設備', category: '防火設備（準遮炎性能）', sub_category: '20分準遮炎性能を有する防火設備等', duration_min: 20, part: '開口部（防火設備）', load_bearing: null, law_article: '建築基準法施行令第136条の2の3関連', description: '防火設備（準遮炎性能・20分間）' },
+    ED: { group: '防火設備', category: '防火設備（小規模な竪穴区画）', sub_category: '小規模な竪穴区画の開口部', duration_min: null, part: '竪穴区画開口部（防火設備）', load_bearing: null, law_article: '建築基準法施行令第112条第12項', description: '小規模な竪穴区画の開口部に設ける防火設備（施行令第112条第12項）' },
     CAT: { group: '防火設備', category: '防火設備の作動性能等', sub_category: '熱感知器連動', duration_min: null, part: '自動閉鎖機構', load_bearing: null, law_article: '建築基準法施行令第112条第19項第一号（旧第14項第一号）', description: '熱感知器と連動した防火設備の自動閉鎖機構' },
     CAS: { group: '防火設備', category: '防火設備の作動性能等', sub_category: '煙感知器連動', duration_min: null, part: '自動閉鎖機構', load_bearing: null, law_article: '建築基準法施行令第112条第19項第二号（旧第14項第二号）', description: '煙感知器と連動した防火設備の自動閉鎖機構' },
     // 飛び火構造（屋根）
@@ -115,6 +142,7 @@
     RLFC: { group: 'シックハウス対策', category: '居室のホルムアルデヒド対策', sub_category: '年間ホルムアルデヒド量を保つ居室', duration_min: null, part: '居室', load_bearing: null, law_article: '建築基準法施行令第20条の7第9項', description: '年間を通じてホルムアルデヒド濃度を基準以下に保つ居室の構造' },
     // 壁倍率・接合部・指定建築材料
     FRM: { group: '構造・壁倍率', category: '木造軸組工法の壁倍率', sub_category: '軸組壁倍率', duration_min: null, part: '耐力壁（木造軸組）', load_bearing: true, law_article: '建築基準法施行令第46条第4項表一の（八）', description: '木造軸組工法における耐力壁の倍率認定' },
+    QFRM: { group: '構造・壁倍率', category: '木造軸組工法の壁倍率（準耐力壁等）', sub_category: '準耐力壁等の壁倍率', duration_min: null, part: '準耐力壁（木造軸組）', load_bearing: true, law_article: '建築基準法施行令第46条第4項等', description: '木造軸組工法における準耐力壁等の壁倍率認定' },
     TBFC: { group: '構造・壁倍率', category: '枠組壁工法の壁倍率', sub_category: '枠組壁倍率（2×4）', duration_min: null, part: '耐力壁（枠組壁）', load_bearing: true, law_article: '建築基準法施行規則第8条の3・平成13年国交告第1540号', description: '枠組壁工法（ツーバイフォー）における耐力壁の倍率認定' },
     JM: { group: '構造・接合部', category: '鋼材の接合部', sub_category: '鋼材の接合', duration_min: null, part: '接合部', load_bearing: true, law_article: '建築基準法施行令第67条第1項', description: '鉄骨造の鋼材の接合方法' },
     JC: { group: '構造・接合部', category: '継手又は仕口の構造', sub_category: '継手・仕口', duration_min: null, part: '継手・仕口', load_bearing: true, law_article: '建築基準法施行令第67条第2項', description: '鉄骨造の継手又は仕口の構造方法' },
@@ -133,6 +161,7 @@
     MWCM: { group: '指定建築材料', category: '指定建築材料', sub_category: '木質複合軸材料', duration_min: null, part: '構造材料', load_bearing: null, law_article: '建築基準法第37条第二号', description: '木質複合軸材料の品質認定' },
     MWTP: { group: '指定建築材料', category: '指定建築材料', sub_category: '木質断熱複合パネル', duration_min: null, part: '構造材料', load_bearing: null, law_article: '建築基準法第37条第二号', description: '木質断熱複合パネルの品質認定' },
     MWGP: { group: '指定建築材料', category: '指定建築材料', sub_category: '木質接着複合パネル', duration_min: null, part: '構造材料', load_bearing: null, law_article: '建築基準法第37条第二号', description: '木質接着複合パネルの品質認定' },
+    MCLT: { group: '指定建築材料', category: '指定建築材料', sub_category: '直交集成板（CLT）', duration_min: null, part: '構造材料', load_bearing: null, law_article: '建築基準法第37条第二号', description: '直交集成板（CLT）の品質認定' },
     MTPS: { group: '指定建築材料', category: '指定建築材料', sub_category: 'タッピンねじ等', duration_min: null, part: '構造材料', load_bearing: null, law_article: '建築基準法第37条第二号', description: 'タッピンねじその他これに類するものの品質認定' },
     MPIN: { group: '指定建築材料', category: '指定建築材料', sub_category: '打込み鋲', duration_min: null, part: '構造材料', load_bearing: null, law_article: '建築基準法第37条第二号', description: '打込み鋲の品質認定' },
     MALA: { group: '指定建築材料', category: '指定建築材料', sub_category: 'アルミニウム合金材', duration_min: null, part: '構造材料', load_bearing: null, law_article: '建築基準法第37条第二号', description: 'アルミニウム合金材の品質認定' },
@@ -162,7 +191,7 @@
     { pos: 1, title: '構造計算（時刻歴）', map: { H: '超高層（法第20条）', M: '超高層以外（法第20条）', S: '工作物（令第139・140・144条）', N: '非該当' } },
     { pos: 2, title: '主要構造部の耐火性能', map: { F: '耐火性能（令第108条の3第1項）', S: '延焼拡大防止性能（令第112条第3項）', N: '非該当' } },
     { pos: 3, title: '防火設備（防火区画）', map: { E: '該当（令第108条の3第4項）', N: '非該当' } },
-    { pos: 4, title: '避難安全性能', map: { B: '全館避難（令第129条の2第1項）', F: '階避難（令第129条第1項）', S: '区画避難（令第128条の6第1項）', N: '非該当' } },
+    { pos: 4, title: '避難安全性能', map: { B: '全館避難（令第129条の2第1項）', F: '階避難（令第129条第1項）', S: '区画避難（令第128条の6第1項）', W: '複数避難安全性能（全館・階・区画の併用等）', N: '非該当' } },
     { pos: 5, title: '主要構造部等の性能', map: { L: '大規模建築物（法第21条第1項）', S: '特殊建築物（法第27条第1項）', P: '防火・準防火地域（法第61条第1項）', N: '非該当' } },
     { pos: 6, title: '防排煙性能', map: { S: '特別避難階段の階段室等（令第123条第3項二号）', E: '非常用EV昇降路等（令第129条の13の3第13項）', W: '兼用付室（令第123条・第129条の13の3）', N: '非該当' } },
     { pos: 7, title: '非常用進入口', map: { E: '該当（令第126条の6第1項三号）', N: '非該当' } }
@@ -282,7 +311,7 @@
    * Decode a 4/5/7-letter Building certification prefix (MLIT 001069848.pdf + legacy H25_before 4/5-char codes)
    */
   function tryDecodeBuildingCode(prefix, serial, branch) {
-    if (!/^([HMSN][FSN][EN][BFSN]([LSPN]([SEWN][EN])?)?)$/.test(prefix)) return null;
+    if (!/^([HMSN][FSN][EN][BFSWN]([LSPN]([SEWN][EN])?)?)$/.test(prefix)) return null;
     if (/^N+$/.test(prefix)) return null;
     const activeItems = [];
     const tokens = [];
@@ -510,8 +539,8 @@
 
     const hasValidSerial = Boolean(serial && serialRe.test(serial));
 
-    // 1. Compound fire/penetration pattern: e.g. FP060BE, QF045BE, QF075CN, PC030RS, QP020BE, PS060WL, NH030FL, FI020RF
-    const compoundMatch = prefix.match(/^([A-Z]{2})(\d{3})([A-Z]{2,3})$/);
+    // 1A. Compound fire/penetration pattern: e.g. FP060BE, QF045BE, QF075CN, PC030RS, QP020BE, PS060WL, NH030FL, FI020RF, FPLH060BE, QPEP020BE
+    const compoundMatch = prefix.match(/^([A-Z]{2,4})(\d{3})([A-Z]{2,3})$/);
     if (compoundMatch) {
       const sCode = compoundMatch[1];
       const durStr = compoundMatch[2];
@@ -526,20 +555,20 @@
       tokens.push(makeToken(
         sCode,
         '構造種別',
-        sDef ? sDef.ja + (sDef.en ? ' (' + sDef.en + ')' : '') : '未定義の構造種別記号',
-        sDef ? 'structure' : 'error'
+        sDef ? sDef.ja + (sDef.en ? ' (' + sDef.en + ')' : '') : (exactDef ? exactDef.category : '未定義の構造種別記号'),
+        (sDef || exactDef) ? 'structure' : 'error'
       ));
       tokens.push(makeToken(
         durStr,
         '耐火・遮炎時間',
         durMin + '分間' + (durMin >= 60 && durMin % 60 === 0 ? '（' + (durMin / 60) + '時間）' : ''),
-        (durMin >= 15 && durMin <= 300) ? 'duration' : 'error'
+        (durMin >= 10 && durMin <= 300) ? 'duration' : 'error'
       ));
       tokens.push(makeToken(
         pCode,
         '対象部位',
-        pDef ? pDef.ja + (pDef.en ? ' (' + pDef.en + ')' : '') : '未定義の部位コード',
-        pDef ? 'part' : 'error'
+        pDef ? pDef.ja + (pDef.en ? ' (' + pDef.en + ')' : '') : (exactDef && exactDef.part ? exactDef.part : '未定義の部位コード'),
+        (pDef || exactDef) ? 'part' : 'error'
       ));
       if (serial) {
         tokens.push(makeToken(serial, '通算番号', '認定通算番号', hasValidSerial ? 'serial' : 'error'));
@@ -548,13 +577,13 @@
         tokens.push(makeToken(branch, '枝番', '変更・枝番', 'branch'));
       }
 
-      if (!sDef) warnings.push('構造種別コード「' + sCode + '」は国交省標準記号に定義されていません。');
-      if (!pDef) warnings.push('部位コード「' + pCode + '」は国交省標準記号に定義されていません。');
-      if (durMin < 15 || durMin > 300) {
+      if (!sDef && !exactDef) warnings.push('構造種別コード「' + sCode + '」は国交省標準記号に定義されていません。');
+      if (!pDef && !exactDef) warnings.push('部位コード「' + pCode + '」は国交省標準記号に定義されていません。');
+      if (durMin < 10 || durMin > 300) {
         warnings.push('性能時間「' + durStr + '（' + durMin + '分）」が一般的な防耐火基準時間と大きく異なります。');
       }
 
-      const validCompound = Boolean(sDef && pDef && durMin >= 15 && durMin <= 300 && hasValidSerial);
+      const validCompound = Boolean(((sDef && pDef) || exactDef) && durMin >= 10 && durMin <= 300 && hasValidSerial);
 
       // Determine article with precision (60-min QF has special article 令129条の2の3)
       let lawArticle = (exactDef && exactDef.law_article) || (sDef && sDef.law_article) || null;
@@ -567,12 +596,14 @@
       }
 
       return Object.assign(base, {
-        structure_type: sDef ? sDef.ja : (exactDef ? exactDef.category : null),
+        structure_type: (exactDef && exactDef.category) || (sDef ? sDef.ja : null),
         structure_code: sCode,
         duration_min: durMin,
-        part: pDef ? pDef.ja : (exactDef ? exactDef.part : null),
+        part: (pDef ? pDef.ja : null) || (exactDef ? exactDef.part : null),
         part_code: pCode,
-        element_group: pDef ? (pDef.element_group || inferElementGroup(pCode, pDef.ja)) : null,
+        element_group: pDef
+          ? (pDef.element_group || inferElementGroup(pCode, pDef.ja))
+          : (exactDef ? inferElementGroup(pCode, exactDef.part || '') : null),
         load_bearing: pDef && typeof pDef.load_bearing === 'boolean'
           ? pDef.load_bearing
           : (exactDef && typeof exactDef.load_bearing === 'boolean' ? exactDef.load_bearing : null),
@@ -586,6 +617,55 @@
         tokens: tokens,
         is_valid_format: validCompound
       });
+    }
+
+    // 1B. Duration-bearing equipment / fire-door codes without part suffix: e.g. EH090, EH060, EQ020, EBN010, EBN020, ECN020
+    const equipDurMatch = prefix.match(/^([A-Z]{2,3})(\d{3})$/);
+    if (equipDurMatch) {
+      const sCode = equipDurMatch[1];
+      const durStr = equipDurMatch[2];
+      const durMin = parseInt(durStr, 10);
+      const exactDef = state.exactCodes[prefix];
+      const sDef = state.structureTypes[sCode] || state.exactCodes[sCode];
+
+      if (exactDef || sDef || /^(EH|EQ|EBN|ECN)$/.test(sCode)) {
+        const typeJa = (exactDef && exactDef.category) || (sDef && (sDef.ja || sDef.category)) || ('防火設備（' + sCode + '）');
+        const tokens = [
+          makeToken(sCode, (exactDef && exactDef.group) || '防火設備記号', typeJa, 'structure'),
+          makeToken(
+            durStr,
+            '遮炎・遮熱時間',
+            durMin + '分間' + (durMin >= 60 && durMin % 60 === 0 ? '（' + (durMin / 60) + '時間）' : ''),
+            (durMin >= 10 && durMin <= 300) ? 'duration' : 'error'
+          )
+        ];
+        if (serial) {
+          tokens.push(makeToken(serial, '通算番号', '認定通算番号', hasValidSerial ? 'serial' : 'error'));
+        }
+        if (branch) {
+          tokens.push(makeToken(branch, '枝番', '変更・枝番', 'branch'));
+        }
+        if (durMin < 10 || durMin > 300) {
+          warnings.push('性能時間「' + durStr + '（' + durMin + '分）」が標準範囲と異なります。');
+        }
+        const partLabel = (exactDef && exactDef.part) || (sDef && sDef.part) || '開口部（防火設備）';
+        return Object.assign(base, {
+          structure_type: typeJa,
+          structure_code: sCode,
+          duration_min: durMin,
+          part: partLabel,
+          part_code: null,
+          element_group: inferElementGroup(sCode, partLabel),
+          load_bearing: (exactDef && typeof exactDef.load_bearing === 'boolean') ? exactDef.load_bearing : null,
+          group: (exactDef && exactDef.group) || '防火設備',
+          category: typeJa,
+          sub_category: (exactDef && exactDef.sub_category) || (durMin + '分間'),
+          law_article: (exactDef && exactDef.law_article) || (sDef && sDef.law_article) || '建築基準法施行令第109条の2・第112条等',
+          description: (exactDef && exactDef.description) || (typeJa + '（' + durMin + '分間）'),
+          tokens: tokens,
+          is_valid_format: Boolean(durMin >= 10 && durMin <= 300 && hasValidSerial)
+        });
+      }
     }
 
     // 2. Exact code match (e.g. NM, NE, QM, EA, EB, EC, SOI, FRM, TBFC, MSTL, TFBH, MF2, etc.)
@@ -704,8 +784,64 @@
   }
 
   /**
+   * Slice the local clause around candidate `idx` on a line that contains multiple certification numbers,
+   * so neighboring certifications' specs (e.g. "外壁 60分 QF045BE-1232 ／ 間仕切壁 45分 QF045BP-0001")
+   * do not bleed into each other's context analysis.
+   */
+  function extractLocalContext(rawLine, lineMatches, idx) {
+    if (!lineMatches || lineMatches.length <= 1) {
+      return rawLine.trim();
+    }
+
+    const cur = lineMatches[idx];
+    const strongSepRe = /[／;；|｜\/\t]/;
+    const softSepRe = /[、,，]/;
+
+    // Left boundary between previous match end and current match start
+    let leftBound = 0;
+    if (idx > 0) {
+      const prevEnd = lineMatches[idx - 1].endIdx;
+      const gapLeft = rawLine.slice(prevEnd, cur.startIdx);
+      const strongM = gapLeft.match(strongSepRe);
+      if (strongM) {
+        leftBound = prevEnd + strongM.index + 1;
+      } else {
+        const softM = gapLeft.match(softSepRe);
+        if (softM) {
+          leftBound = prevEnd + softM.index + 1;
+        } else {
+          leftBound = prevEnd;
+        }
+      }
+    }
+
+    // Right boundary between current match end and next match start
+    let rightBound = rawLine.length;
+    if (idx < lineMatches.length - 1) {
+      const nextStart = lineMatches[idx + 1].startIdx;
+      const gapRight = rawLine.slice(cur.endIdx, nextStart);
+      const strongM = gapRight.match(strongSepRe);
+      if (strongM) {
+        rightBound = cur.endIdx + strongM.index;
+      } else {
+        const softM = gapRight.match(softSepRe);
+        if (softM) {
+          rightBound = cur.endIdx + softM.index;
+        } else {
+          // No explicit delimiter between two certs: if current already has leading spec text, stop at cur.endIdx
+          const hasLeading = rawLine.slice(leftBound, cur.startIdx).trim().length > 0;
+          rightBound = hasLeading ? cur.endIdx : nextStart;
+        }
+      }
+    }
+
+    const snippet = rawLine.slice(leftBound, rightBound).trim();
+    return snippet || cur.rawToken;
+  }
+
+  /**
    * Extract all candidate Minister Certification numbers from arbitrary text.
-   * Returns list of `{ raw, cert_no, lineNo, lineText, source, decoded }`.
+   * Returns list of `{ raw, cert_no, prefix, lineNo, lineText, localContext, source, decoded }`.
    */
   function extractCertNosFromText(text, sourceName) {
     if (!text) return [];
@@ -716,14 +852,16 @@
     const exactList = Object.keys(state.exactCodes).concat(Array.from(state.knownLedgerPrefixes));
     const exactSet = new Set(exactList);
 
-    // Match candidate token: ASCII/fullwidth letters+digits prefix, hyphen variant, 2-6 digits (+ optional -branch / (sub))
+    // Match candidate token: ASCII/fullwidth letters+digits prefix (up to 12 chars for FPLH120BE / QPEP020BE),
+    // hyphen variant, 2-6 digits (+ optional -branch / (sub))
     // Negative lookbehind/lookahead avoided for max browser compatibility; use boundary verification.
-    const candidateRe = /([A-Za-zＡ-Ｚａ-ｚ][A-Za-z0-9Ａ-Ｚａ-ｚ０-９]{1,8})\s*[‐‑‒–—―−ー－﹣-]\s*([0-9０-９]{2,6}(?:[‐‑‒–—―−ー－﹣-][0-9０-９]{1,3})?(?:[(（][0-9０-９]{1,3}[)）])?)/g;
+    const candidateRe = /([A-Za-zＡ-Ｚａ-ｚ][A-Za-z0-9Ａ-Ｚａ-ｚ０-９]{1,11})\s*[‐‑‒–—―−ー－﹣-]\s*([0-9０-９]{2,6}(?:[‐‑‒–—―−ー－﹣-][0-9０-９]{1,3})?(?:[(（][0-9０-９]{1,3}[)）])?)/g;
 
     const results = [];
     lines.forEach(function (rawLine, idx) {
       const lineNo = idx + 1;
       let match;
+      const lineMatches = [];
       candidateRe.lastIndex = 0;
       while ((match = candidateRe.exec(rawLine)) !== null) {
         const startIdx = match.index;
@@ -748,28 +886,41 @@
 
         // Filter out obvious non-cert patterns (ISO-9001, JIS-1234, UTF-8, HTTP-200, CAD layer names, etc.)
         const isKnownExact = exactSet.has(prefix);
-        const isCompoundLike = /^(FP|QF|PC|QP|PS|NH|FI)\d{3}[A-Z]{2,3}$/.test(prefix);
+        const isCompoundLike = /^(FP|QF|PC|QP|PS|NH|FI|FPLH|QPEP)\d{3}[A-Z]{2,3}$/.test(prefix);
+        const isEquipDurLike = /^(EH|EQ|EBN|ECN)\d{3}([A-Z]{2,3})?$/.test(prefix);
         // Also capture plausible typo of compound fire code (e.g. QF045XX-0001 or FP999BE-0001) so screener warns on typos!
-        const isSuspiciousCompound = /^(FP|QF|PC|QP|PS)\d{2,3}[A-Z]{1,3}$/.test(prefix);
-        const isBuilding = /^([HMSN][FSN][EN][BFSN]([LSPN]([SEWN][EN])?)?)$/.test(prefix) && !/^N+$/.test(prefix);
+        const isSuspiciousCompound = /^(FP|QF|PC|QP|PS|FPLH|QPEP|EH|EQ)\d{2,3}[A-Z]{0,3}$/.test(prefix);
+        const isBuilding = /^([HMSN][FSN][EN][BFSWN]([LSPN]([SEWN][EN])?)?)$/.test(prefix) && !/^N+$/.test(prefix);
         const isElevator = (/^E[PN][CN][SN]([UN][UN])?$/.test(prefix) && !/^EN+$/.test(prefix)) ||
                            (/^ES[PN][SN][FN]$/.test(prefix) && prefix !== 'ESNNN') ||
                            (/^A[PN][CSN][ESN]$/.test(prefix) && prefix !== 'ANNN');
         const isSeptic = /^DW\d[A-Z0-9]*$/.test(prefix);
 
-        if (!isKnownExact && !isCompoundLike && !isSuspiciousCompound && !isBuilding && !isElevator && !isSeptic) {
+        if (!isKnownExact && !isCompoundLike && !isEquipDurLike && !isSuspiciousCompound && !isBuilding && !isElevator && !isSeptic) {
           continue;
         }
 
         const decoded = decodeCertNo(norm);
-        results.push({
-          raw: rawToken,
-          cert_no: decoded.cert_no,
-          prefix: decoded.prefix,
-          lineNo: lineNo,
-          lineText: rawLine.trim(),
-          source: src,
+        lineMatches.push({
+          startIdx: startIdx,
+          endIdx: endIdx,
+          rawToken: rawToken,
           decoded: decoded
+        });
+      }
+
+      const trimmedLine = rawLine.trim();
+      for (let i = 0; i < lineMatches.length; i++) {
+        const lm = lineMatches[i];
+        results.push({
+          raw: lm.rawToken,
+          cert_no: lm.decoded.cert_no,
+          prefix: lm.decoded.prefix,
+          lineNo: lineNo,
+          lineText: trimmedLine,
+          localContext: extractLocalContext(rawLine, lineMatches, i),
+          source: src,
+          decoded: lm.decoded
         });
       }
     });
@@ -781,7 +932,7 @@
    * Heuristic contradiction check between surrounding text context and decoded cert / ledger record.
    * Returns array of `{ severity: 'warning'|'error', code, message }`.
    */
-  function analyzeContext(decoded, lineText, ledgerRecord) {
+  function analyzeContext(decoded, contextText, ledgerRecord) {
     const alerts = [];
     if (!decoded) return alerts;
 
@@ -793,20 +944,21 @@
       });
     }
 
-    // 0. Revocation / Expiration check against R5.4 ledger date_jp
-    if (ledgerRecord && ledgerRecord.date_jp && /(取消|失効)/.test(ledgerRecord.date_jp)) {
+    // 0. Revocation / Expiration check against ledger date_jp
+    if (ledgerRecord && ledgerRecord.date_jp && /(取\s*消|失\s*効)/.test(ledgerRecord.date_jp)) {
       alerts.push({
         severity: 'error',
         code: 'REVOKED_OR_EXPIRED',
-        message: 'R5.4帳簿上で取消・失効の記載あり（' + ledgerRecord.date_jp + '）：採用可否を必ず原本・公式DBで確認してください'
+        message: '公開帳簿上で取消・失効の記載あり（' + ledgerRecord.date_jp + '）：採用可否を必ず原本・公式DBで確認してください'
       });
     }
 
-    const text = String(lineText || '');
+    const text = String(contextText || '');
     if (!text) return alerts;
 
     // 1. Fire-resistance duration mismatch check
-    if (typeof decoded.duration_min === 'number' && ['FP', 'QF', 'PC', 'QP', 'PS'].indexOf(decoded.structure_code) !== -1) {
+    if (typeof decoded.duration_min === 'number' &&
+        ['FP', 'QF', 'PC', 'QP', 'PS', 'FPLH', 'QPEP', 'EH', 'EQ'].indexOf(decoded.structure_code) !== -1) {
       const mentionedMinutes = new Set();
       // Match patterns like "60分", "45分間", "120分", "30分"
       const minMatches = text.matchAll(/(?:^|[^\d])(20|30|45|60|75|90|120|180|240)\s*分/g);

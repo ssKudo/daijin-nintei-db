@@ -13,6 +13,7 @@ from daijin_nintei.decoder import SEINOKYO_SEARCH_URL
 from daijin_nintei.screener import (
     STATUS_FOUND,
     STATUS_INVALID_FORMAT,
+    STATUS_UNCHECKED,
     STATUS_UNLISTED_VALID_FORMAT,
     CertScreener,
 )
@@ -50,7 +51,7 @@ class TestExtractionAndStatusClassification:
         # UNLISTED_VALID_FORMAT (zero-hallucination: never condemned as invalid!)
         occ_unlisted = by_cert["QF045BE-9999"]
         assert occ_unlisted.status == STATUS_UNLISTED_VALID_FORMAT
-        assert "令和5年5月以降" in occ_unlisted.status_label
+        assert "未掲載" in occ_unlisted.status_label
         assert occ_unlisted.seinokyo_url == SEINOKYO_SEARCH_URL
         assert occ_unlisted.ledger_record is None
         assert occ_unlisted.warnings == []
@@ -63,7 +64,55 @@ class TestExtractionAndStatusClassification:
         assert report.summary["total_occurrences"] == 4
         assert report.summary["found_count"] == 1
         assert report.summary["unlisted_valid_count"] == 1
+        assert report.summary["unchecked_count"] == 0
         assert report.summary["invalid_format_count"] == 2
+
+    def test_no_db_mode_returns_unchecked_never_unlisted(self) -> None:
+        screener = CertScreener(db=None, auto_load_db=False)
+        sample = "遮音界壁: SOI-0249\n防火設備: EH090-0001\n不正形式: FP060XX-0001\n"
+        report = screener.screen_text(sample, source="no_db.txt")
+        by_cert = {o.cert_no: o for o in report.occurrences}
+
+        assert by_cert["SOI-0249"].status == STATUS_UNCHECKED
+        assert by_cert["EH090-0001"].status == STATUS_UNCHECKED
+        assert by_cert["FP060XX-0001"].status == STATUS_INVALID_FORMAT
+        assert report.summary["unchecked_count"] == 2
+        assert report.summary["unique_unchecked_count"] == 2
+        assert report.summary["unlisted_valid_count"] == 0
+        assert report.summary["found_count"] == 0
+        md = report.to_markdown()
+        assert "UNCHECKED" in md
+        assert "未掲載ではありません" in md
+        csv_rows = list(csv.DictReader(io.StringIO(report.to_csv())))
+        assert {r["cert_no"]: r["status"] for r in csv_rows} == {
+            "SOI-0249": STATUS_UNCHECKED,
+            "EH090-0001": STATUS_UNCHECKED,
+            "FP060XX-0001": STATUS_INVALID_FORMAT,
+        }
+
+    def test_extracts_latest_v2_symbols(self, mock_screener: CertScreener) -> None:
+        sample = (
+            "開口部: ED-0001 / 防火設備: EH090-0001, EH060-0003, EQ060-0001 / "
+            "耐火壁: FPLH060BE-0001 / 準防火外壁: QPEP045BE-0001 / "
+            "木造耐力壁: QFRM-0001 / 材料: MCMU-0001, MCLT-0001, MBLK-0001"
+        )
+        report = mock_screener.screen_text(sample)
+        found_nos = {o.cert_no for o in report.occurrences}
+        expected = {
+            "ED-0001",
+            "EH090-0001",
+            "EH060-0003",
+            "EQ060-0001",
+            "FPLH060BE-0001",
+            "QPEP045BE-0001",
+            "QFRM-0001",
+            "MCMU-0001",
+            "MCLT-0001",
+            "MBLK-0001",
+        }
+        assert expected <= found_nos
+        for occ in report.occurrences:
+            assert occ.decode["is_valid_format"] is True
 
 
 class TestContradictionDetection:
@@ -151,6 +200,29 @@ class TestContradictionDetection:
         assert len(report.occurrences) == 2
         for occ in report.occurrences:
             assert occ.warnings == []
+
+    def test_multi_cert_line_fullwidth_slash_isolates_mismatch(
+        self, mock_screener: CertScreener
+    ) -> None:
+        # Exact regression case from review item 4:
+        # Only QF045BE-1232 should get DURATION_MISMATCH; QF045BP-0001 must have 0 warnings.
+        line = "外壁 60分 QF045BE-1232 ／ 間仕切壁 45分 QF045BP-0001"
+        report = mock_screener.screen_text(line)
+        assert len(report.occurrences) == 2
+        by_cert = {o.cert_no: o for o in report.occurrences}
+        assert {w["code"] for w in by_cert["QF045BE-1232"].warnings} == {
+            "DURATION_MISMATCH"
+        }
+        assert by_cert["QF045BP-0001"].warnings == []
+
+        # Also test fullwidth semicolon & comma separators
+        line2 = "外壁 60分 QF045BE-1232（ニチハ）； 間仕切壁 45分 QF045BP-0001"
+        r2 = mock_screener.screen_text(line2)
+        by_cert2 = {o.cert_no: o for o in r2.occurrences}
+        assert {w["code"] for w in by_cert2["QF045BE-1232"].warnings} == {
+            "DURATION_MISMATCH"
+        }
+        assert by_cert2["QF045BP-0001"].warnings == []
 
 
 class TestFileFormatsAndExports:

@@ -103,8 +103,14 @@ class TestExactAndPenetrationCodes:
             ("EA-0123", "EA", "防火設備", 60),
             ("EB-0001", "EB", "防火設備", 20),
             ("EC-0002", "EC", "防火設備", 20),
+            ("ED-0001", "ED", "小規模な竪穴区画", None),
+            ("EH090-0001", "EH090", "防火設備", 90),
+            ("EH060-0003", "EH060", "防火設備", 60),
+            ("EQ060-0001", "EQ060", "防火設備", 60),
             ("EBN-0012", "EBN", "防火設備", 20),
+            ("EBN020-0012", "EBN020", "防火設備", 20),
             ("ECN-0034", "ECN", "防火設備", 20),
+            ("ECN020-0034", "ECN020", "防火設備", 20),
             ("CAT-0001", "CAT", "防火設備", None),
             ("CAS-0002", "CAS", "防火設備", None),
             ("SOI-0160", "SOI", "遮音構造", None),
@@ -114,6 +120,13 @@ class TestExactAndPenetrationCodes:
             ("PS120WL-9999", "PS120WL", "貫通部", 120),
             ("FRM-0001", "FRM", "耐力壁", None),
             ("TBFC-0001", "TBFC", "耐力壁", None),
+            ("QFRM-0001", "QFRM", "耐力壁", None),
+            ("MCMU-0001", "MCMU", "指定建築材料", None),
+            ("MCLT-0001", "MCLT", "指定建築材料", None),
+            ("MBLK-0001", "MBLK", "指定建築材料", None),
+            ("FPLH060BE-0001", "FPLH060BE", "耐火構造", 60),
+            ("FPLH120FL-0002", "FPLH120FL", "耐火構造", 120),
+            ("QPEP045BE-0001", "QPEP045BE", "準防火", 45),
             ("MF2-0001", "MF2", "ホルムアルデヒド", None),
             ("MF3-0002", "MF3", "ホルムアルデヒド", None),
             ("MFN-1234", "MFN", "ホルムアルデヒド", None),
@@ -136,6 +149,23 @@ class TestExactAndPenetrationCodes:
         assert res.prefix == expected_prefix
         assert expected_cat_sub in (res.category or "")
         assert res.duration_min == expected_dur
+
+    def test_ed_is_small_vertical_shaft_opening_not_fire_damper(self) -> None:
+        decoder = CertDecoder(use_builtin_only=True)
+        res = decoder.decode("ED-0001")
+        assert res.is_valid_format is True
+        assert "小規模な竪穴区画" in (res.category or "")
+        assert "112条第12項" in (res.law_article or "")
+        assert "ダンパー" not in (res.description or "")
+        assert "ダンパー" not in (res.category or "")
+
+    def test_eh090_decodes_heat_insulating_fire_equipment(self) -> None:
+        decoder = CertDecoder(use_builtin_only=True)
+        res = decoder.decode("EH090-0001")
+        assert res.is_valid_format is True
+        assert res.prefix == "EH090"
+        assert res.duration_min == 90
+        assert "防火設備" in (res.category or "")
 
     def test_ne_standalone_is_exterior_noncombustible_not_wall(self) -> None:
         decoder = CertDecoder(use_builtin_only=True)

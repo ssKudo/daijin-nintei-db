@@ -1,15 +1,16 @@
 {
   "schema_version": "1.0.0",
   "source_name": "建築基準法に基づく構造方法等の認定に係る帳簿等（国土交通省）",
-  "source_url": "https://www.mlit.go.jp/jutakukentiku/build/jutakukentiku_house_tk_000165.html",
+  "source_url": "https://www.mlit.go.jp/jutakukentiku/build/jutakukentiku_house_tk_000042.html",
   "source_license": "公共データ利用規約（第1.0版）（PDL1.0）",
-  "data_period": "平成12年04月01日～令和5年04月30日",
+  "data_period": "平成12年04月01日～令和8年09月30日",
   "date_range": {
     "min": "2000-08-07",
-    "max": "2023-04-28"
+    "max": "2026-09-30"
   },
-  "generated_at": "2026-11-20T02:37:29+00:00",
-  "total_records": 81537,
+  "page_last_updated": "令和08年06月01日",
+  "generated_at": "2026-11-20T07:09:35+00:00",
+  "total_records": 93334,
   "categories": [
     {
       "id": "buildings",
@@ -34,6 +35,7 @@
         "HNNN",
         "HNNNN",
         "HNNNNNN",
+        "HNNNNWN",
         "MFEB",
         "MFEBNNN",
         "MFEN",
@@ -50,6 +52,7 @@
         "MNNN",
         "MNNNN",
         "MNNNNNN",
+        "MNNWNNN",
         "NFEB",
         "NFEF",
         "NFEN",
@@ -58,6 +61,7 @@
         "NFNB",
         "NFNBNNN",
         "NFNF",
+        "NFNFNNN",
         "NFNN",
         "NFNNNNN",
         "NNNB",
@@ -65,18 +69,20 @@
         "NNNBNNN",
         "NNNF",
         "NNNFNNN",
-        "NNNN"
+        "NNNN",
+        "NNNSNNN",
+        "NNNWNNN"
       ],
-      "record_count": 13769,
+      "record_count": 15800,
       "json_file": "categories/buildings.json",
       "csv_file": "categories/buildings.csv",
       "source_pdfs": [
         {
           "period": "H25_after",
-          "filename": "001489223.pdf",
-          "url": "https://www.mlit.go.jp/common/001489223.pdf",
-          "pages": 505,
-          "raw_records": 7549
+          "filename": "010_kenchikubutsu.pdf",
+          "url": "https://www.mlit.go.jp/jutakukentiku/build/content/010_kenchikubutsu.pdf",
+          "pages": 657,
+          "raw_records": 9600
         },
         {
           "period": "H25_before",
@@ -96,16 +102,16 @@
         "SNNNN",
         "SNNNNNN"
       ],
-      "record_count": 1081,
+      "record_count": 1113,
       "json_file": "categories/structures.json",
       "csv_file": "categories/structures.csv",
       "source_pdfs": [
         {
           "period": "H25_after",
-          "filename": "001489224.pdf",
-          "url": "https://www.mlit.go.jp/common/001489224.pdf",
-          "pages": 22,
-          "raw_records": 344
+          "filename": "200_kousakubutu.pdf",
+          "url": "https://www.mlit.go.jp/jutakukentiku/build/content/200_kousakubutu.pdf",
+          "pages": 24,
+          "raw_records": 376
         },
         {
           "period": "H25_before",
@@ -131,24 +137,31 @@
         "FP060FL",
         "FP060NE",
         "FP060NP",
+        "FP090BE",
+        "FP090BM",
+        "FP090BP",
+        "FP090CN",
+        "FP090FL",
         "FP120BE",
         "FP120BM",
         "FP120BP",
         "FP120CN",
         "FP120FL",
+        "FP150BM",
+        "FP150CN",
         "FP180BM",
         "FP180CN"
       ],
-      "record_count": 9457,
+      "record_count": 11364,
       "json_file": "categories/fireproof.json",
       "csv_file": "categories/fireproof.csv",
       "source_pdfs": [
         {
           "period": "H25_after",
-          "filename": "001489225.pdf",
-          "url": "https://www.mlit.go.jp/common/001489225.pdf",
-          "pages": 258,
-          "raw_records": 4023
+          "filename": "021_taikakouzou.pdf",
+          "url": "https://www.mlit.go.jp/jutakukentiku/build/content/021_taikakouzou.pdf",
+          "pages": 375,
+          "raw_records": 5926
         },
         {
           "period": "H25_before",
@@ -191,18 +204,19 @@
         "QF075CN",
         "QF075RS",
         "QF090BE",
-        "QF090CN"
+        "QF090CN",
+        "QF120RS"
       ],
-      "record_count": 4252,
+      "record_count": 4991,
       "json_file": "categories/quasi_fireproof.json",
       "csv_file": "categories/quasi_fireproof.csv",
       "source_pdfs": [
         {
           "period": "H25_after",
-          "filename": "001489227.pdf",
-          "url": "https://www.mlit.go.jp/common/001489227.pdf",
-          "pages": 129,
-          "raw_records": 1986
+          "filename": "022_jyuntaikakouzou.pdf",
+          "url": "https://www.mlit.go.jp/jutakukentiku/build/content/022_jyuntaikakouzou.pdf",
+          "pages": 175,
+          "raw_records": 2729
         },
         {
           "period": "H25_before",
@@ -224,16 +238,16 @@
         "QP020BE",
         "QP020NE"
       ],
-      "record_count": 7743,
+      "record_count": 9043,
       "json_file": "categories/fire_resistive.json",
       "csv_file": "categories/fire_resistive.csv",
       "source_pdfs": [
         {
           "period": "H25_after",
-          "filename": "001489228.pdf",
-          "url": "https://www.mlit.go.jp/common/001489228.pdf",
-          "pages": 258,
-          "raw_records": 3966
+          "filename": "023_boukajyunbouka.pdf",
+          "url": "https://www.mlit.go.jp/jutakukentiku/build/content/023_boukajyunbouka.pdf",
+          "pages": 339,
+          "raw_records": 5268
         },
         {
           "period": "H25_before",
@@ -254,16 +268,16 @@
         "UR",
         "UW"
       ],
-      "record_count": 3157,
+      "record_count": 3434,
       "json_file": "categories/fire_brand.json",
       "csv_file": "categories/fire_brand.csv",
       "source_pdfs": [
         {
           "period": "H25_after",
-          "filename": "001489229.pdf",
-          "url": "https://www.mlit.go.jp/common/001489229.pdf",
-          "pages": 83,
-          "raw_records": 1318
+          "filename": "024_tobihi.pdf",
+          "url": "https://www.mlit.go.jp/jutakukentiku/build/content/024_tobihi.pdf",
+          "pages": 104,
+          "raw_records": 1596
         },
         {
           "period": "H25_before",
@@ -284,16 +298,16 @@
         "FI020RF",
         "NH030FL"
       ],
-      "record_count": 40,
+      "record_count": 43,
       "json_file": "categories/fire_other.json",
       "csv_file": "categories/fire_other.csv",
       "source_pdfs": [
         {
           "period": "H25_after",
-          "filename": "001489230.pdf",
-          "url": "https://www.mlit.go.jp/common/001489230.pdf",
+          "filename": "025_sonotakouzou.pdf",
+          "url": "https://www.mlit.go.jp/jutakukentiku/build/content/025_sonotakouzou.pdf",
           "pages": 5,
-          "raw_records": 26
+          "raw_records": 29
         },
         {
           "period": "H25_before",
@@ -316,16 +330,16 @@
         "RE",
         "RM"
       ],
-      "record_count": 10492,
+      "record_count": 11557,
       "json_file": "categories/fire_materials.json",
       "csv_file": "categories/fire_materials.csv",
       "source_pdfs": [
         {
           "period": "H25_after",
-          "filename": "001489231.pdf",
-          "url": "https://www.mlit.go.jp/common/001489231.pdf",
-          "pages": 194,
-          "raw_records": 3150
+          "filename": "030_boukazairyou.pdf",
+          "url": "https://www.mlit.go.jp/jutakukentiku/build/content/030_boukazairyou.pdf",
+          "pages": 262,
+          "raw_records": 4214
         },
         {
           "period": "H25_before",
@@ -346,18 +360,21 @@
         "EA",
         "EB",
         "EBN010",
-        "EC"
+        "EC",
+        "ED",
+        "EH060",
+        "EH090"
       ],
-      "record_count": 8809,
+      "record_count": 10126,
       "json_file": "categories/fire_doors.json",
       "csv_file": "categories/fire_doors.csv",
       "source_pdfs": [
         {
           "period": "H25_after",
-          "filename": "001489232.pdf",
-          "url": "https://www.mlit.go.jp/common/001489232.pdf",
-          "pages": 338,
-          "raw_records": 5486
+          "filename": "040_boukasetsubi.pdf",
+          "url": "https://www.mlit.go.jp/jutakukentiku/build/content/040_boukasetsubi.pdf",
+          "pages": 416,
+          "raw_records": 6798
         },
         {
           "period": "H25_before",
@@ -374,18 +391,19 @@
       "group": "指定建築材料等",
       "prefixes": [
         "FRM",
+        "QFRM",
         "TBFC"
       ],
-      "record_count": 976,
+      "record_count": 1082,
       "json_file": "categories/wall_multiplier.json",
       "csv_file": "categories/wall_multiplier.csv",
       "source_pdfs": [
         {
           "period": "H25_after",
-          "filename": "001489233.pdf",
-          "url": "https://www.mlit.go.jp/common/001489233.pdf",
-          "pages": 30,
-          "raw_records": 413
+          "filename": "060_kabebairitu.pdf",
+          "url": "https://www.mlit.go.jp/jutakukentiku/build/content/060_kabebairitu.pdf",
+          "pages": 38,
+          "raw_records": 517
         },
         {
           "period": "H25_before",
@@ -405,16 +423,16 @@
         "JC",
         "JM"
       ],
-      "record_count": 138,
+      "record_count": 205,
       "json_file": "categories/steel_joints.json",
       "csv_file": "categories/steel_joints.csv",
       "source_pdfs": [
         {
           "period": "H25_after",
-          "filename": "001489238.pdf",
-          "url": "https://www.mlit.go.jp/common/001489238.pdf",
-          "pages": 6,
-          "raw_records": 61
+          "filename": "080_setsugoubu.pdf",
+          "url": "https://www.mlit.go.jp/jutakukentiku/build/content/080_setsugoubu.pdf",
+          "pages": 10,
+          "raw_records": 128
         },
         {
           "period": "H25_before",
@@ -442,16 +460,16 @@
         "MWLD",
         "MWTP"
       ],
-      "record_count": 1940,
+      "record_count": 2093,
       "json_file": "categories/designated_materials_1.json",
       "csv_file": "categories/designated_materials_1.csv",
       "source_pdfs": [
         {
           "period": "H25_after",
-          "filename": "001489235.pdf",
-          "url": "https://www.mlit.go.jp/common/001489235.pdf",
-          "pages": 66,
-          "raw_records": 710
+          "filename": "051_shiteikenchikuzairyou.pdf",
+          "url": "https://www.mlit.go.jp/jutakukentiku/build/content/051_shiteikenchikuzairyou.pdf",
+          "pages": 81,
+          "raw_records": 867
         },
         {
           "period": "H25_before",
@@ -477,16 +495,16 @@
         "MTDN",
         "MTPS"
       ],
-      "record_count": 4883,
+      "record_count": 5287,
       "json_file": "categories/designated_materials_2.json",
       "csv_file": "categories/designated_materials_2.csv",
       "source_pdfs": [
         {
           "period": "H25_after",
-          "filename": "001489236.pdf",
-          "url": "https://www.mlit.go.jp/common/001489236.pdf",
-          "pages": 158,
-          "raw_records": 1851
+          "filename": "052_shiteikenchikuzairyou.pdf",
+          "url": "https://www.mlit.go.jp/jutakukentiku/build/content/052_shiteikenchikuzairyou.pdf",
+          "pages": 195,
+          "raw_records": 2269
         },
         {
           "period": "H25_before",
@@ -508,16 +526,16 @@
         "TFBR",
         "TFBS"
       ],
-      "record_count": 4229,
+      "record_count": 5645,
       "json_file": "categories/steel_factories.json",
       "csv_file": "categories/steel_factories.csv",
       "source_pdfs": [
         {
           "period": "H25_after",
-          "filename": "001489241.pdf",
-          "url": "https://www.mlit.go.jp/common/001489241.pdf",
-          "pages": 252,
-          "raw_records": 4229
+          "filename": "210_tekkotsusei.pdf",
+          "url": "https://www.mlit.go.jp/jutakukentiku/build/content/210_tekkotsusei.pdf",
+          "pages": 335,
+          "raw_records": 5645
         },
         {
           "period": "H25_before",
@@ -537,16 +555,16 @@
         "PS060FL",
         "PS060WL"
       ],
-      "record_count": 1876,
+      "record_count": 2159,
       "json_file": "categories/penetration.json",
       "csv_file": "categories/penetration.csv",
       "source_pdfs": [
         {
           "period": "H25_after",
-          "filename": "001489244.pdf",
-          "url": "https://www.mlit.go.jp/common/001489244.pdf",
-          "pages": 44,
-          "raw_records": 709
+          "filename": "130_kukaku.pdf",
+          "url": "https://www.mlit.go.jp/jutakukentiku/build/content/130_kukaku.pdf",
+          "pages": 62,
+          "raw_records": 991
         },
         {
           "period": "H25_before",
@@ -564,16 +582,16 @@
       "prefixes": [
         "SOI"
       ],
-      "record_count": 544,
+      "record_count": 576,
       "json_file": "categories/sound_insulation.json",
       "csv_file": "categories/sound_insulation.csv",
       "source_pdfs": [
         {
           "period": "H25_after",
-          "filename": "001489239.pdf",
-          "url": "https://www.mlit.go.jp/common/001489239.pdf",
-          "pages": 9,
-          "raw_records": 119
+          "filename": "090_shaonkouzou.pdf",
+          "url": "https://www.mlit.go.jp/jutakukentiku/build/content/090_shaonkouzou.pdf",
+          "pages": 11,
+          "raw_records": 151
         },
         {
           "period": "H25_before",
@@ -594,16 +612,16 @@
         "MFN",
         "RLFC"
       ],
-      "record_count": 3491,
+      "record_count": 3729,
       "json_file": "categories/sick_house.json",
       "csv_file": "categories/sick_house.csv",
       "source_pdfs": [
         {
           "period": "H25_after",
-          "filename": "001489240.pdf",
-          "url": "https://www.mlit.go.jp/common/001489240.pdf",
-          "pages": 43,
-          "raw_records": 658
+          "filename": "100_sickhouse.pdf",
+          "url": "https://www.mlit.go.jp/jutakukentiku/build/content/100_sickhouse.pdf",
+          "pages": 57,
+          "raw_records": 896
         },
         {
           "period": "H25_before",
@@ -627,16 +645,16 @@
         "TSTB",
         "TWDB"
       ],
-      "record_count": 1310,
+      "record_count": 1376,
       "json_file": "categories/doc_omission.json",
       "csv_file": "categories/doc_omission.csv",
       "source_pdfs": [
         {
           "period": "H25_after",
-          "filename": "001489237.pdf",
-          "url": "https://www.mlit.go.jp/common/001489237.pdf",
-          "pages": 22,
-          "raw_records": 298
+          "filename": "070_toshoshouryaku.pdf",
+          "url": "https://www.mlit.go.jp/jutakukentiku/build/content/070_toshoshouryaku.pdf",
+          "pages": 26,
+          "raw_records": 364
         },
         {
           "period": "H25_before",
@@ -660,16 +678,16 @@
         "LAE",
         "VEC"
       ],
-      "record_count": 377,
+      "record_count": 389,
       "json_file": "categories/building_equipment.json",
       "csv_file": "categories/building_equipment.csv",
       "source_pdfs": [
         {
           "period": "H25_after",
-          "filename": "001489243.pdf",
-          "url": "https://www.mlit.go.jp/common/001489243.pdf",
-          "pages": 17,
-          "raw_records": 238
+          "filename": "120_kenchikusetsubi.pdf",
+          "url": "https://www.mlit.go.jp/jutakukentiku/build/content/120_kenchikusetsubi.pdf",
+          "pages": 18,
+          "raw_records": 251
         },
         {
           "period": "H25_before",
@@ -701,18 +719,19 @@
         "EPNNNN",
         "EPNNUN",
         "EPNS",
-        "ESNNF"
+        "ESNNF",
+        "ESNSN"
       ],
-      "record_count": 2906,
+      "record_count": 3249,
       "json_file": "categories/elevators.json",
       "csv_file": "categories/elevators.csv",
       "source_pdfs": [
         {
           "period": "H25_after",
-          "filename": "001489245.pdf",
-          "url": "https://www.mlit.go.jp/common/001489245.pdf",
-          "pages": 109,
-          "raw_records": 1445
+          "filename": "150_shoukouki.pdf",
+          "url": "https://www.mlit.go.jp/jutakukentiku/build/content/150_shoukouki.pdf",
+          "pages": 134,
+          "raw_records": 1792
         },
         {
           "period": "H25_before",
@@ -728,22 +747,24 @@
       "name": "遊戯施設（コースター等）",
       "group": "建築設備／遊戯施設",
       "prefixes": [
+        "ANCN",
         "ANNE",
+        "ANNS",
         "ANSE",
         "ANSN",
         "APCS",
         "APSE"
       ],
-      "record_count": 67,
+      "record_count": 73,
       "json_file": "categories/amusement_facilities.json",
       "csv_file": "categories/amusement_facilities.csv",
       "source_pdfs": [
         {
           "period": "H25_after",
-          "filename": "001489242.pdf",
-          "url": "https://www.mlit.go.jp/common/001489242.pdf",
+          "filename": "160_yuugishisetsu.pdf",
+          "url": "https://www.mlit.go.jp/jutakukentiku/build/content/160_yuugishisetsu.pdf",
           "pages": 3,
-          "raw_records": 21
+          "raw_records": 27
         },
         {
           "period": "H25_before",

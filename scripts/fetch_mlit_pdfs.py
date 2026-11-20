@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Download official MLIT Minister Certification ledger & reference PDFs.
 
-Source: https://www.mlit.go.jp/jutakukentiku/build/jutakukentiku_house_tk_000165.html
+Source: https://www.mlit.go.jp/jutakukentiku/build/jutakukentiku_house_tk_000042.html
 License: Public Data License (Version 1.0) / PDL1.0
 
 Idempotent by default: skips already-downloaded valid PDFs unless --force is given.
@@ -23,7 +23,7 @@ from urllib.parse import urljoin
 
 import requests
 
-SOURCE_URL = "https://www.mlit.go.jp/jutakukentiku/build/jutakukentiku_house_tk_000165.html"
+SOURCE_URL = "https://www.mlit.go.jp/jutakukentiku/build/jutakukentiku_house_tk_000042.html"
 BASE_URL = "https://www.mlit.go.jp"
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -31,7 +31,7 @@ USER_AGENT = (
     "Chrome/124.0.0.0 Safari/537.36"
 )
 
-# Reference PDFs hosted on the same MLIT page
+# Reference PDFs hosted on the official MLIT tk_000042.html page
 REFERENCE_PDFS: list[dict[str, str]] = [
     {
         "id": "ref_buildings",
@@ -59,15 +59,9 @@ REFERENCE_PDFS: list[dict[str, str]] = [
     },
     {
         "id": "ref_english_codes",
-        "filename": "001288118.pdf",
-        "url": "https://www.mlit.go.jp/common/001288118.pdf",
+        "filename": "001709467.pdf",
+        "url": "https://www.mlit.go.jp/jutakukentiku/build/content/001709467.pdf",
         "title": "（参考資料）認定記号の英語表記について",
-    },
-    {
-        "id": "ref_special_ledger",
-        "filename": "001461907.pdf",
-        "url": "https://www.mlit.go.jp/common/001461907.pdf",
-        "title": "特殊構造方法等認定に係る帳簿",
     },
 ]
 
@@ -378,6 +372,19 @@ def main() -> int:
         json.dumps(sources_meta, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
+
+    # Prune obsolete cached PDFs from older MLIT index pages so .cache/pdfs/ stays clean
+    active_filenames = {r["filename"] for r in ref_results}
+    for cat in categories:
+        for pdf in cat["pdfs"]:
+            active_filenames.add(pdf["filename"])
+    pruned = 0
+    for existing_pdf in out_dir.glob("*.pdf"):
+        if existing_pdf.name not in active_filenames:
+            existing_pdf.unlink()
+            pruned += 1
+    if pruned:
+        print(f"Pruned {pruned} obsolete PDF(s) from {out_dir}")
 
     print(
         f"\nDone. Downloaded: {downloaded_count}, Skipped (cached): {skipped_count}. "

@@ -2,24 +2,28 @@
 
 Works purely on official MLIT symbol rules (from ``data/code_rules.json`` when
 available, with a complete built-in fallback table), so it can decode brand-new
-certifications issued after the R5.4.30 MLIT public ledger cutoff without any
+certifications issued after the local MLIT public ledger cutoff without any
 network access or external dependencies.
 """
 
 from __future__ import annotations
 
+import importlib.resources
 import json
+import os
 import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
 SEINOKYO_SEARCH_URL = "https://www.seinokyo.jp/ninteidb/pub/"
+DATA_DIR_ENV_VAR = "DAIJIN_NINTEI_DATA_DIR"
 
 # Default repository data path relative to this module
 _DEFAULT_CODE_RULES_PATH = (
     Path(__file__).resolve().parent.parent / "data" / "code_rules.json"
 )
+_BUNDLED_CODE_RULES_FILENAME = "bundled_code_rules.json"
 
 # Dash / hyphen / minus / prolonged-sound variants normalized to ASCII hyphen '-'
 _HYPHEN_CHARS = "\u2010\u2011\u2012\u2013\u2014\u2015\u2212\uff0d\u30fc\uff70"
@@ -41,12 +45,26 @@ BUILTIN_STRUCTURE_TYPES: dict[str, dict[str, str]] = {
         "category": "防耐火構造",
         "description": "通常の火災が終了するまで倒壊・延焼を防止する耐火性能を有する構造",
     },
+    "FPLH": {
+        "ja": "耐火構造（長時間遮熱性）",
+        "en": "Fireproof Construction (Long-Duration Heat Insulation)",
+        "law_article": "法第2条第7号・令第107条",
+        "category": "耐火構造",
+        "description": "通常の火災による長時間遮熱性能を有する耐火構造",
+    },
     "QF": {
         "ja": "準耐火構造",
         "en": "Quasi-Fireproof Construction",
         "law_article": "法第2条第7号の2・令第107条の2",
         "category": "防耐火構造",
         "description": "通常の火災による延焼を抑制するための準耐火性能を有する構造",
+    },
+    "QPEP": {
+        "ja": "準防火構造（増改築部分）",
+        "en": "Quasi-Fire Preventive Construction (Extension/Renovation Part)",
+        "law_article": "建築基準法第23条・施行令第109条の6（増改築部分の外壁）",
+        "category": "防火構造・準防火構造",
+        "description": "既存建築物の増改築部分における外壁の準防火構造",
     },
     "PC": {
         "ja": "防火構造",
@@ -198,6 +216,10 @@ BUILTIN_BUILDING_POSITIONS: list[dict[str, Any]] = [
             "B": {"ja": "全館避難安全性能", "law_article": "建築基準法施行令第129条の2第1項"},
             "F": {"ja": "階避難安全性能", "law_article": "建築基準法施行令第129条第1項"},
             "S": {"ja": "区画避難安全性能", "law_article": "建築基準法施行令第128条の6第1項"},
+            "W": {
+                "ja": "複数避難安全性能（全館・階・区画の併用等）",
+                "law_article": "建築基準法施行令第128条の6・第129条・第129条の2関連",
+            },
             "N": {"ja": "非該当", "law_article": ""},
         },
     },
@@ -483,6 +505,18 @@ BUILTIN_EXACT_CODES: dict[str, dict[str, Any]] = {
         "law_article": "法第61条・令第136条の2",
         "description": "防火地域・準防火地域等の外壁開口部に設ける防火設備（20分間準遮炎性能）",
     },
+    "ED": {
+        "code": "ED",
+        "group": "防火設備",
+        "category": "小規模な竪穴区画の開口部",
+        "sub_category": "小規模な竪穴区画の開口部",
+        "structure_type": "防火設備（小規模な竪穴区画の開口部）",
+        "duration_min": None,
+        "part": "開口部（防火設備）",
+        "load_bearing": None,
+        "law_article": "建築基準法施行令第112条第12項",
+        "description": "小規模な竪穴区画の開口部に設ける防火設備（建築基準法施行令第112条第12項）",
+    },
     "EBN": {
         "code": "EBN",
         "group": "防火関係",
@@ -580,6 +614,54 @@ BUILTIN_EXACT_CODES: dict[str, dict[str, Any]] = {
         "load_bearing": True,
         "law_article": "平成13年国交省告示第1540号・令第80条の2",
         "description": "枠組壁工法（ツーバイフォー）における耐力壁等の大臣認定",
+    },
+    "QFRM": {
+        "code": "QFRM",
+        "group": "構造関係",
+        "category": "木造耐力壁（壁倍率等）",
+        "sub_category": "準耐力壁・木造軸組工法耐力壁",
+        "structure_type": "木造軸組工法耐力壁（準耐力壁等）",
+        "duration_min": None,
+        "part": "壁（耐力壁）",
+        "load_bearing": True,
+        "law_article": "建築基準法施行令第46条第4項等",
+        "description": "木造軸組工法における耐力壁・準耐力壁等の大臣認定",
+    },
+    "MCMU": {
+        "code": "MCMU",
+        "group": "構造関係",
+        "category": "指定建築材料",
+        "sub_category": "指定建築材料（MCMU）",
+        "structure_type": "指定建築材料（MCMU）",
+        "duration_min": None,
+        "part": None,
+        "load_bearing": None,
+        "law_article": "建築基準法第37条第二号",
+        "description": "指定建築材料（コンクリートブロック等・MCMU）",
+    },
+    "MCLT": {
+        "code": "MCLT",
+        "group": "構造関係",
+        "category": "指定建築材料",
+        "sub_category": "直交集成板（CLT）",
+        "structure_type": "指定建築材料（直交集成板・CLT）",
+        "duration_min": None,
+        "part": None,
+        "load_bearing": None,
+        "law_article": "建築基準法第37条第二号",
+        "description": "指定建築材料（直交集成板・CLT）",
+    },
+    "MBLK": {
+        "code": "MBLK",
+        "group": "構造関係",
+        "category": "指定建築材料",
+        "sub_category": "指定建築材料（ブロック等）",
+        "structure_type": "指定建築材料（MBLK）",
+        "duration_min": None,
+        "part": None,
+        "load_bearing": None,
+        "law_article": "建築基準法第37条第二号",
+        "description": "指定建築材料（MBLK）",
     },
     # ホルムアルデヒド発散建築材料 (Formaldehyde-emitting materials)
     "MF2": {
@@ -719,6 +801,8 @@ _SERIAL_FIRE_RE = re.compile(r"^\d{3,5}(?:-\d{1,3})?(?:\([0-9A-Z]{1,4}\))?$")
 
 # Penetration code pattern (e.g., PS060WL, PS120FL, PS045WL)
 _PENETRATION_RE = re.compile(r"^PS(\d{3})(WL|FL)$")
+# Heat-insulating / fire-preventive equipment duration patterns (e.g., EH090, EH060, EQ060, EBN020, ECN020)
+_FIRE_EQUIP_DURATION_RE = re.compile(r"^(EH|EQ|EBN|ECN)(\d{3})([A-Z]{2})?$")
 
 
 def normalize_cert_no(raw: str) -> str:
@@ -814,11 +898,21 @@ class CertDecoder:
         self.rules_source: str = "builtin"
 
         if not use_builtin_only:
-            candidate_path = (
-                Path(rules_path) if rules_path is not None else _DEFAULT_CODE_RULES_PATH
-            )
-            if candidate_path.is_file():
-                self._load_rules_file(candidate_path)
+            loaded = False
+            if rules_path is not None:
+                candidate_path = Path(rules_path)
+                if candidate_path.is_file():
+                    loaded = self._load_rules_file(candidate_path)
+            else:
+                env_data_dir = os.environ.get(DATA_DIR_ENV_VAR, "").strip()
+                if env_data_dir:
+                    env_rules = Path(env_data_dir) / "code_rules.json"
+                    if env_rules.is_file():
+                        loaded = self._load_rules_file(env_rules)
+                if not loaded and _DEFAULT_CODE_RULES_PATH.is_file():
+                    loaded = self._load_rules_file(_DEFAULT_CODE_RULES_PATH)
+                if not loaded:
+                    self._load_bundled_rules()
 
         # Build dynamic structured fire-code pattern (excluding PS which uses _PENETRATION_RE)
         fire_st_keys = [k for k in self.structure_types if k != "PS"]
@@ -828,19 +922,40 @@ class CertDecoder:
         pt_pattern = "|".join(
             sorted((re.escape(k) for k in self.part_codes), key=len, reverse=True)
         )
+        self._st_pattern = st_pattern
         self._structured_fire_re = re.compile(
             rf"^({st_pattern})(\d{{3}})({pt_pattern})$"
         )
 
-    def _load_rules_file(self, path: Path) -> None:
-        """Load and merge rules from ``data/code_rules.json``."""
+    def _load_bundled_rules(self) -> bool:
+        """Load packaged ``bundled_code_rules.json`` for standalone wheel installs."""
+        try:
+            resource = importlib.resources.files("daijin_nintei").joinpath(
+                _BUNDLED_CODE_RULES_FILENAME
+            )
+            if resource.is_file():
+                raw = json.loads(resource.read_text(encoding="utf-8"))
+                return self._apply_rules_dict(
+                    raw, source_label=f"package:daijin_nintei/{_BUNDLED_CODE_RULES_FILENAME}"
+                )
+        except Exception:
+            pass
+        local_bundled = Path(__file__).resolve().parent / _BUNDLED_CODE_RULES_FILENAME
+        if local_bundled.is_file():
+            return self._load_rules_file(local_bundled)
+        return False
+
+    def _load_rules_file(self, path: Path) -> bool:
+        """Load and merge rules from a ``code_rules.json`` file."""
         try:
             raw = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
-            return
+            return False
+        return self._apply_rules_dict(raw, source_label=str(path))
 
+    def _apply_rules_dict(self, raw: Any, *, source_label: str) -> bool:
         if not isinstance(raw, dict):
-            return
+            return False
 
         if isinstance(raw.get("seinokyo_search_url"), str) and raw["seinokyo_search_url"]:
             self.seinokyo_search_url = raw["seinokyo_search_url"]
@@ -892,7 +1007,8 @@ class CertDecoder:
                     merged_ear[k] = v
             self.elevator_amusement_rules = merged_ear
 
-        self.rules_source = str(path)
+        self.rules_source = source_label
+        return True
 
     @property
     def known_exact_prefixes(self) -> list[str]:
@@ -1150,7 +1266,84 @@ class CertDecoder:
                         meta[k] = exact_meta[k]
             return meta, warnings
 
-        # 3. Exact prefix lookup (NM, NE, QM, EA, EB, EC, SOI, FRM, TBFC, MFN, HSB, TFB*, SPRG, LAE, ...)
+        # 2b. Fire equipment with embedded 3-digit duration (EH090, EH060, EQ060, EBN020, ECN020, ...)
+        m_feq = _FIRE_EQUIP_DURATION_RE.match(prefix)
+        if m_feq:
+            feq_code, dur_str, pt_code = m_feq.groups()
+            dur = int(dur_str)
+            if dur == 0:
+                warnings.append("性能時間が000分（0分）となっています。")
+                return None, warnings
+            if pt_code and pt_code not in self.part_codes:
+                return None, warnings
+            if dur not in STANDARD_FIRE_DURATIONS:
+                warnings.append(f"一般的な防火設備性能時間以外の表記です: {dur}分")
+            pt_info = self.part_codes.get(pt_code) if pt_code else None
+            default_feq_map: dict[str, tuple[str, str, str, str]] = {
+                "EH": (
+                    "防火設備（遮熱性能・火熱遮断壁等）",
+                    "防火設備（遮熱性能）",
+                    "開口部（防火設備）",
+                    "建築基準法施行令第112条等（遮熱性能を有する防火設備）",
+                ),
+                "EQ": (
+                    "防火設備（遮炎・遮熱等）",
+                    "防火設備",
+                    "開口部（防火設備）",
+                    "建築基準法施行令第109条の2・第112条等",
+                ),
+                "EBN": (
+                    "防火設備（遮炎性能・外壁開口部等）",
+                    "防火設備",
+                    "開口部（防火設備）",
+                    "建築基準法第2条第九号の二ロ・施行令第109条の2",
+                ),
+                "ECN": (
+                    "防火設備（準遮炎性能・外壁開口部等）",
+                    "防火設備",
+                    "開口部（防火設備）",
+                    "建築基準法第61条・施行令第136条の2",
+                ),
+            }
+            st_default, cat_default, part_default, law_default = default_feq_map[feq_code]
+            part_label = (pt_info.get("ja") if pt_info else None) or part_default
+            meta = {
+                "structure_type": st_default,
+                "structure_type_code": feq_code,
+                "duration_min": dur,
+                "part": part_label,
+                "part_code": pt_code,
+                "part_group": self._infer_part_group(part_label, pt_code),
+                "load_bearing": pt_info.get("load_bearing") if pt_info else None,
+                "category": cat_default,
+                "law_article": law_default,
+                "group": "防火設備",
+                "sub_category": f"{st_default}（{dur}分間）",
+                "description": f"{st_default}（{dur}分間）",
+                "_is_structured_fire": True,
+            }
+            if exact_meta:
+                for k in (
+                    "structure_type",
+                    "category",
+                    "law_article",
+                    "group",
+                    "sub_category",
+                    "description",
+                    "part",
+                ):
+                    if exact_meta.get(k):
+                        meta[k] = exact_meta[k]
+                if not exact_meta.get("structure_type") and exact_meta.get("sub_category"):
+                    meta["structure_type"] = exact_meta["sub_category"]
+                if exact_meta.get("duration_min") is not None:
+                    meta["duration_min"] = exact_meta["duration_min"]
+                if exact_meta.get("load_bearing") is not None:
+                    meta["load_bearing"] = exact_meta["load_bearing"]
+                meta["part_group"] = self._infer_part_group(meta["part"], pt_code)
+            return meta, warnings
+
+        # 3. Exact prefix lookup (NM, NE, QM, EA, EB, EC, ED, SOI, FRM, TBFC, QFRM, MFN, HSB, TFB*, SPRG, LAE, ...)
         if exact_meta:
             part_val = exact_meta.get("part")
             structure_type_val = (
@@ -1225,7 +1418,7 @@ class CertDecoder:
                 )
             else:
                 m_omitted = re.match(
-                    r"^((?:FP|QF|PC|QP|NH|FI)\d{3}[A-Z]{2}|PS\d{3}(?:WL|FL))(\d{3,5})$",
+                    rf"^((?:{self._st_pattern})\d{{3}}[A-Z]{{2}}|PS\d{{3}}(?:WL|FL)|(?:EH|EQ|EBN|ECN)\d{{3}})(\d{{3,5}})$",
                     normalized,
                 )
                 if m_omitted:
@@ -1297,10 +1490,10 @@ class CertDecoder:
                 warnings.append(f"通算番号の形式が不正です: {serial}")
 
         if meta is None:
-            if re.match(r"^(?:FP|QF|PC|QP|NH|FI)\d{3}[A-Z]{2}$", prefix):
+            if re.match(rf"^(?:{self._st_pattern})\d{{3}}[A-Z]{{2}}$", prefix):
                 part_part = prefix[-2:]
                 warnings.append(f"未定義の部位記号です: {part_part}（プレフィックス: {prefix}）")
-            elif re.match(r"^(?:FP|QF|PC|QP|NH|FI)\d+[A-Z]{2}$", prefix):
+            elif re.match(rf"^(?:{self._st_pattern})\d+[A-Z]{{2}}$", prefix):
                 warnings.append(
                     f"性能時間は3桁の数字で表記する必要があります（例: 045, 060）: {prefix}"
                 )

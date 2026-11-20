@@ -64,5 +64,18 @@ class TestCertDatabase:
         assert len(page) == 2
 
     def test_missing_manifest_raises(self, tmp_path: Path) -> None:
-        with pytest.raises(FileNotFoundError):
+        with pytest.raises(FileNotFoundError) as exc_info:
             CertDatabase(data_dir=tmp_path / "missing")
+        msg = str(exc_info.value)
+        assert "https://github.com/ssKudo/daijin-nintei-db" in msg
+        assert "--data-dir" in msg
+        assert "DAIJIN_NINTEI_DATA_DIR" in msg
+
+    def test_env_var_data_dir_resolution(
+        self, mock_data_dir: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("DAIJIN_NINTEI_DATA_DIR", str(mock_data_dir))
+        db = CertDatabase()
+        assert db.data_dir == mock_data_dir
+        assert db.total_records == 6
+        assert db.lookup("FP060BE-0123") is not None
