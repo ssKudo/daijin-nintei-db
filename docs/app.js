@@ -251,8 +251,8 @@
   /* ========================================================================
      Data Loading & Indexing (Manifest, Code Rules, On-Demand Categories)
      ======================================================================== */
-  async function fetchJson(url) {
-    const res = await fetch(url, { cache: 'default' });
+  async function fetchJson(url, cache = 'default') {
+    const res = await fetch(url, { cache });
     if (!res.ok) {
       throw new Error('HTTP ' + res.status + ' (' + url + ')');
     }
@@ -313,7 +313,7 @@
 
   async function initData() {
     const [manifestRes, rulesRes] = await Promise.allSettled([
-      fetchJson('./data/manifest.json'),
+      fetchJson('./data/manifest.json', appState.manifestLoadFailed ? 'reload' : 'default'),
       fetchJson('./data/code_rules.json')
     ]);
 
@@ -323,9 +323,18 @@
 
     renderQuickReference();
 
-    if (manifestRes.status !== 'fulfilled' || !manifestRes.value) {
+    const manifest = manifestRes.status === 'fulfilled' ? manifestRes.value : null;
+    const categories = manifest && manifest.categories;
+    if (!Array.isArray(categories) || categories.length === 0 ||
+        categories.some((cat) => !cat || typeof cat.id !== 'string' || !cat.id ||
+          !Number.isSafeInteger(cat.record_count) || cat.record_count < 0 ||
+          !Array.isArray(cat.prefixes)) ||
+        new Set(categories.map((cat) => cat.id)).size !== categories.length ||
+        categories.reduce((total, cat) => total + cat.record_count, 0) !== manifest.total_records) {
       appState.manifestLoadFailed = true;
-      const errMsg = manifestRes.reason ? manifestRes.reason.message : 'manifest.json の取得に失敗しました。';
+      const errMsg = manifestRes.reason
+        ? manifestRes.reason.message
+        : 'manifest.json の区分構成または収録件数が不正です。';
       showGlobalError(
         'データマニフェスト（./data/manifest.json）を読み込めませんでした。ローカルで閲覧する場合は docs/ ディレクトリ内で `python -m http.server` 等を起動してアクセスしてください。詳細: ' + errMsg
       );
@@ -339,14 +348,12 @@
     appState.manifestLoadFailed = false;
     hideGlobalError();
 
-    const manifest = manifestRes.value;
     appState.manifest = manifest;
     applyManifestMetadata(manifest);
 
     // Build lookup maps
     appState.categoriesById.clear();
     appState.prefixToCatIds.clear();
-    const categories = Array.isArray(manifest.categories) ? manifest.categories : [];
     Decoder.registerManifestPrefixes(categories);
 
     categories.forEach((cat) => {
@@ -451,13 +458,21 @@
     if (!cat) return [];
 
     const url = resolveCategoryUrl(cat);
-    const promise = fetchJson(url)
+    const promise = fetchJson(url, appState.failedCatIds.has(catId) ? 'reload' : 'default')
       .then((records) => {
-        const list = Array.isArray(records) ? records : [];
-        // Pre-compute normalized search fields for fast filtering and O(1) exact lookup
-        for (let i = 0; i < list.length; i++) {
-          const r = list[i];
+        if (!Array.isArray(records) || records.length !== cat.record_count) {
+          throw new Error('カテゴリJSONの形式または件数がマニフェストと一致しません: ' + catId);
+        }
+
+        // Validate the whole category before adding anything to the shared index.
+        for (const r of records) {
+          if (!r || r.category_id !== catId || typeof r.cert_no !== 'string') {
+            throw new Error('カテゴリJSONに不正な認定レコードがあります: ' + catId);
+          }
           const norm = Decoder.normalizeCertNo(r.cert_no);
+          if (!norm) {
+            throw new Error('カテゴリJSONに空の認定番号があります: ' + catId);
+          }
           r._normCert = norm;
           r._prefixUpper = String(r.prefix || norm.split('-')[0] || '').toUpperCase();
           r._haystack = (
@@ -468,21 +483,21 @@
             (r.evaluator || '') + ' ' +
             (r.category_name || '')
           ).toLowerCase();
-
-          if (norm) {
-            if (!appState.certIndex.has(norm)) {
-              appState.certIndex.set(norm, []);
-            }
-            appState.certIndex.get(norm).push(r);
-          }
         }
-        appState.categoryCache.set(catId, list);
+
+        for (const r of records) {
+          if (!appState.certIndex.has(r._normCert)) {
+            appState.certIndex.set(r._normCert, []);
+          }
+          appState.certIndex.get(r._normCert).push(r);
+        }
+        appState.categoryCache.set(catId, records);
         appState.loadedCatIds.add(catId);
         appState.failedCatIds.delete(catId);
         appState.allRecordsCache = null; // invalidate flat cache
         appState.categoryInFlight.delete(catId);
         updateLoadedStatusUi();
-        return list;
+        return records;
       })
       .catch((err) => {
         appState.failedCatIds.add(catId);
@@ -1458,12 +1473,12 @@
 
       const openBtn = $('btn-decoder-open-modal');
       if (openBtn) openBtn.addEventListener('click', () => openDetailModal(rec));
-    } else if (failedCandidates.length > 0 && decoded.is_valid_format) {
+    } else if (failedCandidates.length > 0) {
       const failedNames = failedCandidates.map(getCategoryDisplayName).join('、');
       ledgerEl.innerHTML =
         '<div class="status-banner status-banner--unchecked">' +
           '<div class="status-banner-title">? 台帳未照合（データ読込失敗）</div>' +
-          '<p>記号形式は国土交通省の付番ルールに整合していますが、照合対象カテゴリ（<strong>' + escapeHtml(failedNames) + '</strong>）のデータ取得に失敗したため、公開帳簿への掲載有無を照合できませんでした。<strong>未掲載と判定されたわけではありません</strong>。</p>' +
+          '<p>照合対象カテゴリ（<strong>' + escapeHtml(failedNames) + '</strong>）のデータ取得に失敗したため、公開帳簿への掲載有無を照合できませんでした。<strong>未掲載と判定されたわけではありません</strong>。</p>' +
         '</div>' +
         '<p class="card-desc" style="margin-bottom: 12px;">通信状態を確認のうえ「再試行」をクリックするか、性能協の公式検索システムで直接ご確認ください。</p>' +
         '<div class="scope-actions">' +
@@ -1491,13 +1506,10 @@
       const cpBtn = $('btn-decoder-copy-open');
       if (cpBtn) cpBtn.addEventListener('click', () => copyToClipboard(decoded.cert_no, '認定番号「' + decoded.cert_no + '」をコピーしました'));
     } else {
-      const extraFail = failedCandidates.length > 0
-        ? '（なお、一部カテゴリのデータ取得にも失敗しています）'
-        : '';
       ledgerEl.innerHTML =
         '<div class="status-banner status-banner--invalid">' +
           '<div class="status-banner-title">✕ 記号形式の不一致・帳簿未一致</div>' +
-          '<p>入力された文字列は標準的な大臣認定番号の規則と一致せず、' + escapeHtml(cutoffLabel) + '公開帳簿にも該当がありません' + escapeHtml(extraFail) + '。誤記・全角記号・ハイフン欠落等がないかご確認ください。</p>' +
+          '<p>入力された文字列は標準的な大臣認定番号の規則と一致せず、' + escapeHtml(cutoffLabel) + '公開帳簿にも該当がありません。誤記・全角記号・ハイフン欠落等がないかご確認ください。</p>' +
         '</div>' +
         '<a class="btn btn--sm" href="' + escapeHtml(seinokyoUrl) + '" target="_blank" rel="noopener noreferrer">建築性能基準推進協会（性能協DB）を開く ↗</a>';
     }
@@ -1712,10 +1724,10 @@
       let status;
       if (ledgerRecord) {
         status = 'FOUND';
-      } else if (!item.decoded.is_valid_format) {
-        status = 'INVALID_FORMAT';
       } else if (failedCands.length > 0) {
         status = 'UNCHECKED';
+      } else if (!item.decoded.is_valid_format) {
+        status = 'INVALID_FORMAT';
       } else {
         status = 'UNLISTED_VALID_FORMAT';
       }
