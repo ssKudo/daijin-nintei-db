@@ -89,16 +89,16 @@
         <div class="card">
           <div class="search-controls-grid">
             <div>
-              <label class="field-label" for="search-category">カテゴリ選択（オンデマンド読込）</label>
+              <label class="field-label" for="search-category">カテゴリ選択（初期値：すべて・全区分横断）</label>
               <select id="search-category" class="select">
-                <option value="">カテゴリを読み込み中…</option>
+                <option value="" selected>すべて（全区分・読込中…）</option>
               </select>
             </div>
             <div>
               <label class="field-label" for="search-query">キーワード検索（認定番号・申請者／メーカー・構造方法名・評価機関）</label>
               <div class="search-input-wrap">
                 <svg class="search-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                <input id="search-query" class="input" type="search" placeholder="例：QF045BE、ニチハ、石膏ボード、日本建築センター（スペース区切りAND検索）" autocomplete="off">
+                <input id="search-query" class="input" type="search" placeholder="例：QF045BE、吉野石膏、アイジー工業、石膏ボード（スペース区切りAND検索）" autocomplete="off">
                 <button id="btn-clear-query" type="button" class="search-clear-btn hidden" aria-label="検索語をクリア">×</button>
               </div>
             </div>
@@ -135,12 +135,8 @@
 
           <div class="scope-bar">
             <div class="scope-actions">
-              <button id="btn-load-popular" type="button" class="btn btn--sm">主要防耐火セット読込（防耐火・材料・設備・遮音）</button>
-              <button id="btn-load-all" type="button" class="btn btn--sm btn--primary">全カテゴリ一括読込</button>
-              <label class="toggle-check">
-                <input id="chk-search-all-loaded" type="checkbox">
-                <span>読込済み全カテゴリを横断検索（<span id="loaded-cat-count" class="mono">0</span>カテゴリ読込済）</span>
-              </label>
+              <span id="loaded-status-badge" class="badge badge--indigo">全区分データ読込準備中…</span>
+              <button id="btn-reset-to-all" type="button" class="btn btn--sm hidden">すべて（全区分）に戻す</button>
             </div>
             <div class="scope-actions">
               <a class="btn btn--sm btn--amber" href="https://www.seinokyo.jp/ninteidb/pub/" target="_blank" rel="noopener noreferrer">
@@ -181,7 +177,7 @@
               <thead>
                 <tr>
                   <th style="width: 155px;">認定番号</th>
-                  <th style="width: 155px;">カテゴリ</th>
+                  <th style="width: 180px;">カテゴリ</th>
                   <th>構造方法等の名称</th>
                   <th style="width: 220px;">申請者（メーカー等）</th>
                   <th style="width: 125px;">認定年月日</th>

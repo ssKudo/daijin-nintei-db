@@ -795,6 +795,17 @@ button, input, select, textarea {
   border-color: var(--border-color);
 }
 
+.badge--category {
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  border-color: var(--border-strong);
+  max-width: 175px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  vertical-align: top;
+}
+
 .badge--indigo {
   background: var(--indigo-50);
   color: var(--indigo-text);

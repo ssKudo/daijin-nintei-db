@@ -11,6 +11,22 @@
     return;
   }
 
+  const ALL_CATEGORIES_VALUE = '';
+  const PRIORITY_CATEGORY_ORDER = [
+    'fireproof',
+    'quasi_fireproof',
+    'fire_resistive',
+    'fire_materials',
+    'fire_doors',
+    'sound_insulation',
+    'penetration',
+    'fire_brand',
+    'wall_multiplier'
+  ];
+  const jaCollator = (typeof Intl !== 'undefined' && Intl.Collator)
+    ? new Intl.Collator('ja')
+    : { compare: (a, b) => String(a).localeCompare(String(b)) };
+
   /* ========================================================================
      Application State
      ======================================================================== */
@@ -22,6 +38,10 @@
     categoryInFlight: new Map(),        // catId -> Promise<Array<Record>>
     certIndex: new Map(),               // normCertNo -> Array<Record>
     loadedCatIds: new Set(),
+    allRecordsCache: null,              // flattened cache of all loaded records
+    allCategoriesLoadPromise: null,     // singleton background loader promise
+    progressiveRefreshTimer: null,
+    hasRenderedInitialBatch: false,
 
     // Search tab state
     searchFiltered: [],
@@ -289,18 +309,15 @@
 
     populateCategorySelect(categories);
 
-    // Load default initial category (prefer fireproof/耐火構造 or first non-empty category)
-    const defaultCat = pickDefaultCategory(categories);
-    if (defaultCat) {
-      $('search-category').value = defaultCat.id;
-      await loadCategory(defaultCat.id);
-      updateLoadedCategoryCount();
-      refreshPrefixFilterOptions();
-      runSearchFilter();
-    }
-
-    // Handle optional URL hash (e.g., #decoder=QF045BE-1232)
+    // Handle optional URL hash immediately (e.g., #decoder=QF045BE-1232, #batch)
     handleInitialHash();
+
+    // Default selection is "すべて（全区分）" -> seamlessly load all 21 categories in background
+    if ($('search-category')) {
+      $('search-category').value = ALL_CATEGORIES_VALUE;
+    }
+    updateLoadedStatusUi();
+    ensureAllCategoriesLoaded();
   }
 
   function showGlobalError(msg) {
@@ -312,17 +329,30 @@
     }
   }
 
-  function pickDefaultCategory(categories) {
-    if (!categories.length) return null;
-    const preferred = categories.find((c) => /耐火構造/.test(c.name) && c.record_count > 0);
-    if (preferred) return preferred;
-    return categories.find((c) => c.record_count > 0) || categories[0];
+  function getAllCategoryIdsPrioritized() {
+    if (!appState.manifest || !Array.isArray(appState.manifest.categories)) return [];
+    const allIds = appState.manifest.categories.map((c) => c.id);
+    const idSet = new Set(allIds);
+    const prioritized = PRIORITY_CATEGORY_ORDER.filter((id) => idSet.has(id));
+    const prioSet = new Set(prioritized);
+    allIds.forEach((id) => {
+      if (!prioSet.has(id)) prioritized.push(id);
+    });
+    return prioritized;
   }
 
   function populateCategorySelect(categories) {
     const sel = $('search-category');
     if (!sel) return;
     sel.innerHTML = '';
+
+    // Default first option: All categories cross-search
+    const allOpt = document.createElement('option');
+    allOpt.value = ALL_CATEGORIES_VALUE;
+    const totalCount = appState.manifest ? appState.manifest.total_records : 0;
+    allOpt.textContent = 'すべて（全' + categories.length + '区分・' + formatNumber(totalCount) + '件）';
+    allOpt.selected = true;
+    sel.appendChild(allOpt);
 
     // Group categories by cat.group preserving manifest order
     const groups = new Map();
@@ -343,6 +373,8 @@
       });
       sel.appendChild(og);
     });
+
+    sel.value = ALL_CATEGORIES_VALUE;
   }
 
   async function loadCategory(catId) {
@@ -385,8 +417,9 @@
         }
         appState.categoryCache.set(catId, list);
         appState.loadedCatIds.add(catId);
+        appState.allRecordsCache = null; // invalidate flat cache
         appState.categoryInFlight.delete(catId);
-        updateLoadedCategoryCount();
+        updateLoadedStatusUi();
         return list;
       })
       .catch((err) => {
@@ -400,7 +433,7 @@
   }
 
   /**
-   * Load multiple categories concurrently with progress callback.
+   * Load multiple categories concurrently with progress callback and event-loop yields.
    */
   async function loadCategoriesBatch(catIds, onProgress) {
     const uniqueIds = Array.from(new Set(catIds)).filter((id) => appState.categoriesById.has(id));
@@ -427,6 +460,8 @@
         }
         completed++;
         if (onProgress) onProgress(completed, total, totalRowsLoaded);
+        // Yield briefly to keep typing & scrolling smooth during bulk JSON parsing
+        await new Promise((resolve) => setTimeout(resolve, 0));
       }
     }
 
@@ -463,25 +498,151 @@
     return Array.from(matched);
   }
 
-  function updateLoadedCategoryCount() {
-    const el = $('loaded-cat-count');
-    if (el) el.textContent = String(appState.loadedCatIds.size);
+  function getTotalCategoriesCount() {
+    return (appState.manifest && Array.isArray(appState.manifest.categories))
+      ? appState.manifest.categories.length
+      : 0;
+  }
+
+  function getAllLoadedRecords() {
+    if (appState.allRecordsCache) return appState.allRecordsCache;
+    const combined = [];
+    const cats = (appState.manifest && Array.isArray(appState.manifest.categories))
+      ? appState.manifest.categories
+      : [];
+    for (let c = 0; c < cats.length; c++) {
+      const list = appState.categoryCache.get(cats[c].id);
+      if (list) {
+        for (let i = 0; i < list.length; i++) combined.push(list[i]);
+      }
+    }
+    appState.allRecordsCache = combined;
+    return combined;
+  }
+
+  function isAllCategoriesLoaded() {
+    const totalCats = getTotalCategoriesCount();
+    return totalCats > 0 && appState.loadedCatIds.size >= totalCats;
+  }
+
+  function updateLoadedStatusUi() {
+    const badge = $('loaded-status-badge');
+    if (!badge) return;
+    const totalCats = getTotalCategoriesCount();
+    const loadedCats = appState.loadedCatIds.size;
+    const loadedRows = getAllLoadedRecords().length;
+
+    if (totalCats > 0 && loadedCats >= totalCats) {
+      badge.className = 'badge badge--emerald';
+      badge.textContent = '✓ 全' + totalCats + '区分 読込済（' + formatNumber(loadedRows) + '件・横断検索対応）';
+    } else if (totalCats > 0) {
+      badge.className = 'badge badge--indigo';
+      badge.textContent = '読込中：' + loadedCats + ' / ' + totalCats + ' 区分（' + formatNumber(loadedRows) + '件キャッシュ済）';
+    }
+  }
+
+  function scheduleProgressiveRefresh(immediate) {
+    if (!isAllCategoriesSelected()) return;
+    const run = () => {
+      appState.progressiveRefreshTimer = null;
+      if (!isAllCategoriesSelected()) return;
+      refreshPrefixFilterOptions();
+      runSearchFilter({ preservePage: appState.hasRenderedInitialBatch });
+      appState.hasRenderedInitialBatch = true;
+    };
+
+    if (immediate || !appState.hasRenderedInitialBatch) {
+      if (appState.progressiveRefreshTimer) {
+        clearTimeout(appState.progressiveRefreshTimer);
+        appState.progressiveRefreshTimer = null;
+      }
+      run();
+      return;
+    }
+
+    if (!appState.progressiveRefreshTimer) {
+      appState.progressiveRefreshTimer = setTimeout(run, 220);
+    }
+  }
+
+  /**
+   * Seamlessly fetch all unloaded categories in the background with live progress UI.
+   * Deduplicated via singleton promise so multiple callers share the same in-flight work.
+   */
+  function ensureAllCategoriesLoaded() {
+    if (!appState.manifest) return Promise.resolve();
+    if (isAllCategoriesLoaded()) {
+      updateLoadedStatusUi();
+      return Promise.resolve();
+    }
+    if (appState.allCategoriesLoadPromise) {
+      return appState.allCategoriesLoadPromise;
+    }
+
+    const allIds = getAllCategoryIdsPrioritized();
+    const totalCats = allIds.length;
+    const unloadedIds = allIds.filter((id) => !appState.categoryCache.has(id));
+    if (unloadedIds.length === 0) {
+      updateLoadedStatusUi();
+      return Promise.resolve();
+    }
+
+    appState.isLoadingCategories = true;
+    const box = $('search-progress-box');
+    const textEl = $('search-progress-text');
+    const pctEl = $('search-progress-pct');
+    const fillEl = $('search-progress-fill');
+
+    const updateProgressBar = () => {
+      const doneCats = appState.loadedCatIds.size;
+      const loadedRows = getAllLoadedRecords().length;
+      const pct = totalCats > 0 ? Math.round((doneCats / totalCats) * 100) : 100;
+      if (textEl) {
+        textEl.textContent =
+          '全' + totalCats + '区分をバックグラウンド読込中…（' +
+          doneCats + ' / ' + totalCats + ' 区分・' + formatNumber(loadedRows) + ' 件）';
+      }
+      if (pctEl) pctEl.textContent = pct + '%';
+      if (fillEl) fillEl.style.width = pct + '%';
+    };
+
+    if (box) box.classList.remove('hidden');
+    updateProgressBar();
+
+    const p = loadCategoriesBatch(unloadedIds, () => {
+      updateProgressBar();
+      updateLoadedStatusUi();
+      scheduleProgressiveRefresh(false);
+    }).finally(() => {
+      appState.isLoadingCategories = false;
+      appState.allCategoriesLoadPromise = null;
+      updateProgressBar();
+      updateLoadedStatusUi();
+      if (isAllCategoriesSelected()) {
+        scheduleProgressiveRefresh(true);
+      }
+      setTimeout(() => {
+        if (box && !appState.isLoadingCategories) {
+          box.classList.add('hidden');
+        }
+      }, 500);
+    });
+
+    appState.allCategoriesLoadPromise = p;
+    return p;
   }
 
   /* ========================================================================
      Tab 1: Search
      ======================================================================== */
+  function isAllCategoriesSelected() {
+    const sel = $('search-category');
+    return !sel || sel.value === ALL_CATEGORIES_VALUE;
+  }
+
   function getScopedRecords() {
-    const searchAllLoaded = $('chk-search-all-loaded') && $('chk-search-all-loaded').checked;
-    if (searchAllLoaded) {
-      const combined = [];
-      appState.loadedCatIds.forEach((id) => {
-        const list = appState.categoryCache.get(id);
-        if (list) {
-          for (let i = 0; i < list.length; i++) combined.push(list[i]);
-        }
-      });
-      return combined;
+    if (isAllCategoriesSelected()) {
+      return getAllLoadedRecords();
     }
     const catId = $('search-category') ? $('search-category').value : '';
     return appState.categoryCache.get(catId) || [];
@@ -513,7 +674,18 @@
     }
   }
 
-  function runSearchFilter() {
+  function cmpAsc(a, b) {
+    const sa = a || '';
+    const sb = b || '';
+    return sa < sb ? -1 : (sa > sb ? 1 : 0);
+  }
+
+  function runSearchFilter(opts) {
+    const preservePage = Boolean(opts && opts.preservePage);
+    if (isAllCategoriesSelected() && appState.manifest && !isAllCategoriesLoaded()) {
+      ensureAllCategoriesLoaded();
+    }
+
     const records = getScopedRecords();
     const rawQuery = ($('search-query') ? $('search-query').value : '').trim();
     const prefixFilter = $('search-prefix') ? $('search-prefix').value : '';
@@ -555,25 +727,27 @@
       filtered.push(r);
     }
 
-    // Sort
+    // Fast sort (ASCII comparison for ISO dates & cert_no; cached Intl.Collator for Japanese applicant)
     filtered.sort((a, b) => {
       if (sortMode === 'date_desc') {
-        return (b.date || '').localeCompare(a.date || '') || (a.cert_no || '').localeCompare(b.cert_no || '');
+        return cmpAsc(b.date, a.date) || cmpAsc(a.cert_no, b.cert_no);
       }
       if (sortMode === 'date_asc') {
-        return (a.date || '').localeCompare(b.date || '') || (a.cert_no || '').localeCompare(b.cert_no || '');
+        return cmpAsc(a.date, b.date) || cmpAsc(a.cert_no, b.cert_no);
       }
       if (sortMode === 'cert_asc') {
-        return (a.cert_no || '').localeCompare(b.cert_no || '');
+        return cmpAsc(a.cert_no, b.cert_no);
       }
       if (sortMode === 'applicant_asc') {
-        return (a.applicant || '').localeCompare(b.applicant || '', 'ja');
+        return jaCollator.compare(a.applicant || '', b.applicant || '') || cmpAsc(a.cert_no, b.cert_no);
       }
       return 0;
     });
 
     appState.searchFiltered = filtered;
-    appState.searchPage = 1;
+    if (!preservePage) {
+      appState.searchPage = 1;
+    }
     renderSearchTable();
   }
 
@@ -586,6 +760,9 @@
 
     const total = appState.searchFiltered.length;
     const scopeTotal = getScopedRecords().length;
+    const allMode = isAllCategoriesSelected();
+    const stillLoadingAll = allMode && !isAllCategoriesLoaded();
+    const totalCats = getTotalCategoriesCount();
     const pageSize = appState.searchPageSize;
     const totalPages = Math.max(1, Math.ceil(total / pageSize));
     if (appState.searchPage > totalPages) appState.searchPage = totalPages;
@@ -594,9 +771,22 @@
     const endIdx = Math.min(total, startIdx + pageSize);
 
     if (summaryEl) {
-      summaryEl.innerHTML =
-        '該当 <strong>' + formatNumber(total) + '</strong> 件' +
-        '（対象母数 ' + formatNumber(scopeTotal) + ' 件）';
+      if (stillLoadingAll) {
+        summaryEl.innerHTML =
+          '該当 <strong>' + formatNumber(total) + '</strong> 件' +
+          '（全区分読込中：' + appState.loadedCatIds.size + ' / ' + totalCats + ' 区分・' +
+          formatNumber(scopeTotal) + ' 件を検索済…）';
+      } else if (allMode) {
+        summaryEl.innerHTML =
+          '該当 <strong>' + formatNumber(total) + '</strong> 件' +
+          '（全' + totalCats + '区分・' + formatNumber(scopeTotal) + ' 件中）';
+      } else {
+        const catObj = appState.categoriesById.get($('search-category').value);
+        const catLabel = catObj ? catObj.name : '選択カテゴリ';
+        summaryEl.innerHTML =
+          '該当 <strong>' + formatNumber(total) + '</strong> 件' +
+          '（' + escapeHtml(catLabel) + '・' + formatNumber(scopeTotal) + ' 件中）';
+      }
     }
     if (exportBtn) {
       exportBtn.disabled = total === 0;
@@ -605,11 +795,23 @@
     tbody.innerHTML = '';
     if (total === 0) {
       const tr = document.createElement('tr');
-      tr.innerHTML =
-        '<td colspan="6" class="empty-state">' +
-        '<p><strong>条件に一致する認定レコードが見つかりませんでした。</strong></p>' +
-        '<p>別のカテゴリに切り替えるか、「読込済み全カテゴリを横断検索」「全カテゴリ一括読込」をお試しください。<br>令和5年5月以降の新規認定は「認定番号 デコーダ」または建築性能基準推進協会（性能協）公式DBでご確認いただけます。</p>' +
-        '</td>';
+      if (stillLoadingAll) {
+        tr.innerHTML =
+          '<td colspan="6" class="empty-state">' +
+          '<p><strong>全' + totalCats + '区分のデータをバックグラウンドで読み込み中です（' +
+          appState.loadedCatIds.size + ' / ' + totalCats + ' 区分完了）…</strong></p>' +
+          '<p>一致する認定レコードが見つかり次第、自動的に一覧へ表示されます。</p>' +
+          '</td>';
+      } else {
+        const hintText = allMode
+          ? 'キーワード・記号フィルタ・期間条件を見直してお試しください。'
+          : 'キーワード・フィルタ条件を見直すか、カテゴリを「すべて（全区分）」に切り替えてお試しください。';
+        tr.innerHTML =
+          '<td colspan="6" class="empty-state">' +
+          '<p><strong>条件に一致する認定レコードが見つかりませんでした。</strong></p>' +
+          '<p>' + hintText + '<br>令和5年5月以降の新規認定は「認定番号 デコーダ」または建築性能基準推進協会（性能協）公式DBでご確認いただけます。</p>' +
+          '</td>';
+      }
       tbody.appendChild(tr);
       if (paginationEl) paginationEl.classList.add('hidden');
       return;
@@ -619,6 +821,9 @@
     for (let i = startIdx; i < endIdx; i++) {
       const r = appState.searchFiltered[i];
       const revoked = isRevokedRecord(r);
+      const catMeta = appState.categoriesById.get(r.category_id);
+      const catName = r.category_name || r.category_id || '';
+      const catTip = catMeta && catMeta.group ? (catMeta.group + ' / ' + catName) : catName;
       const tr = document.createElement('tr');
       tr.className = 'clickable-row';
       tr.tabIndex = 0;
@@ -626,7 +831,7 @@
       tr.innerHTML =
         '<td><span class="cert-pill">' + escapeHtml(r.cert_no) + '</span>' +
         (revoked ? '<div style="margin-top:4px;"><span class="badge badge--rose">取消・失効記載</span></div>' : '') + '</td>' +
-        '<td><span class="badge badge--neutral">' + escapeHtml(r.category_name || r.category_id) + '</span></td>' +
+        '<td><span class="badge badge--category" title="' + escapeHtml(catTip) + '">' + escapeHtml(catName) + '</span></td>' +
         '<td><div class="cell-title" title="' + escapeHtml(r.title) + '">' + escapeHtml(r.title || '—') + '</div></td>' +
         '<td><div class="cell-applicant">' + escapeHtml(r.applicant || '—') + '</div></td>' +
         '<td class="cell-date" title="' + escapeHtml(r.date || '') + '">' + escapeHtml(r.date_jp || r.date || '—') + '</td>' +
@@ -647,62 +852,9 @@
     }
   }
 
-  async function handleLoadPopularCategories() {
-    if (!appState.manifest || appState.isLoadingCategories) return;
-    const cats = appState.manifest.categories || [];
-    // Select fire-related & acoustic popular categories dynamically
-    const popular = cats.filter((c) => /耐火|準耐火|防火|遮音|区画貫通/.test(c.name + ' ' + (c.group || '')));
-    const targetIds = (popular.length ? popular : cats.slice(0, 5)).map((c) => c.id);
-    await loadWithProgress(targetIds, '主要防耐火・遮音カテゴリを読み込み中…');
-    if ($('chk-search-all-loaded')) $('chk-search-all-loaded').checked = true;
-    refreshPrefixFilterOptions();
-    runSearchFilter();
-    showToast('主要カテゴリ（' + targetIds.length + '件）を読み込みました');
-  }
-
-  async function handleLoadAllCategories() {
-    if (!appState.manifest || appState.isLoadingCategories) return;
-    const allIds = (appState.manifest.categories || []).map((c) => c.id);
-    await loadWithProgress(allIds, '全カテゴリ帳簿を読み込み中…');
-    if ($('chk-search-all-loaded')) $('chk-search-all-loaded').checked = true;
-    refreshPrefixFilterOptions();
-    runSearchFilter();
-    showToast('全 ' + allIds.length + ' カテゴリの読み込みが完了しました');
-  }
-
-  async function loadWithProgress(catIds, label) {
-    appState.isLoadingCategories = true;
-    const box = $('search-progress-box');
-    const textEl = $('search-progress-text');
-    const pctEl = $('search-progress-pct');
-    const fillEl = $('search-progress-fill');
-    const btnAll = $('btn-load-all');
-    const btnPop = $('btn-load-popular');
-
-    if (btnAll) btnAll.disabled = true;
-    if (btnPop) btnPop.disabled = true;
-    if (box) box.classList.remove('hidden');
-    if (textEl) textEl.textContent = label;
-    if (pctEl) pctEl.textContent = '0%';
-    if (fillEl) fillEl.style.width = '0%';
-
-    try {
-      await loadCategoriesBatch(catIds, (done, total, rows) => {
-        const pct = total > 0 ? Math.round((done / total) * 100) : 100;
-        if (textEl) {
-          textEl.textContent = label + '（' + done + ' / ' + total + ' カテゴリ・' + formatNumber(rows) + ' 件）';
-        }
-        if (pctEl) pctEl.textContent = pct + '%';
-        if (fillEl) fillEl.style.width = pct + '%';
-      });
-    } finally {
-      appState.isLoadingCategories = false;
-      if (btnAll) btnAll.disabled = false;
-      if (btnPop) btnPop.disabled = false;
-      setTimeout(() => {
-        if (box) box.classList.add('hidden');
-      }, 600);
-    }
+  function updateResetToAllButton() {
+    const btn = $('btn-reset-to-all');
+    if (btn) btn.classList.toggle('hidden', isAllCategoriesSelected());
   }
 
   function initSearchTab() {
@@ -710,20 +862,40 @@
     if (catSelect) {
       catSelect.addEventListener('change', async function () {
         const catId = catSelect.value;
-        if (!catId) return;
-        if ($('chk-search-all-loaded')) $('chk-search-all-loaded').checked = false;
-        $('search-tbody').innerHTML = '<tr><td colspan="6" class="empty-state">カテゴリデータを読み込み中…</td></tr>';
-        try {
-          await loadCategory(catId);
+        updateResetToAllButton();
+        if (catId === ALL_CATEGORIES_VALUE) {
+          ensureAllCategoriesLoaded();
           refreshPrefixFilterOptions();
           runSearchFilter();
+          return;
+        }
+        if (!appState.categoryCache.has(catId)) {
+          $('search-tbody').innerHTML = '<tr><td colspan="6" class="empty-state">カテゴリデータを読み込み中…</td></tr>';
+        }
+        try {
+          await loadCategory(catId);
+          // Only render if user hasn't switched away while loading
+          if (catSelect.value === catId) {
+            refreshPrefixFilterOptions();
+            runSearchFilter();
+          }
         } catch (err) {
           $('search-tbody').innerHTML = '<tr><td colspan="6" class="empty-state">読み込みに失敗しました: ' + escapeHtml(err.message) + '</td></tr>';
         }
       });
     }
 
-    const debouncedSearch = debounce(runSearchFilter, 120);
+    if ($('btn-reset-to-all')) {
+      $('btn-reset-to-all').addEventListener('click', function () {
+        if ($('search-category')) $('search-category').value = ALL_CATEGORIES_VALUE;
+        updateResetToAllButton();
+        ensureAllCategoriesLoaded();
+        refreshPrefixFilterOptions();
+        runSearchFilter();
+      });
+    }
+
+    const debouncedSearch = debounce(() => runSearchFilter(), 120);
     if ($('search-query')) {
       $('search-query').addEventListener('input', debouncedSearch);
     }
@@ -735,20 +907,18 @@
       });
     }
     ['search-prefix', 'search-period', 'search-sort'].forEach((id) => {
-      if ($(id)) $(id).addEventListener('change', runSearchFilter);
+      if ($(id)) $(id).addEventListener('change', () => runSearchFilter());
     });
-    if ($('chk-search-all-loaded')) {
-      $('chk-search-all-loaded').addEventListener('change', function () {
-        refreshPrefixFilterOptions();
-        runSearchFilter();
-      });
-    }
     if ($('btn-reset-filters')) {
       $('btn-reset-filters').addEventListener('click', function () {
+        if ($('search-category')) $('search-category').value = ALL_CATEGORIES_VALUE;
         $('search-query').value = '';
         $('search-prefix').value = '';
         $('search-period').value = '';
         $('search-sort').value = 'date_desc';
+        updateResetToAllButton();
+        ensureAllCategoriesLoaded();
+        refreshPrefixFilterOptions();
         runSearchFilter();
       });
     }
@@ -771,9 +941,6 @@
       appState.searchPage = Math.max(1, Math.ceil(appState.searchFiltered.length / appState.searchPageSize));
       renderSearchTable();
     });
-
-    if ($('btn-load-popular')) $('btn-load-popular').addEventListener('click', handleLoadPopularCategories);
-    if ($('btn-load-all')) $('btn-load-all').addEventListener('click', handleLoadAllCategories);
 
     // Row click / keyboard open modal
     const tbody = $('search-tbody');
